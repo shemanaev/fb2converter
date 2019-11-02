@@ -4,7 +4,6 @@ package processor
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/base64"
 	"fmt"
 	"image"
@@ -23,6 +22,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
+	"github.com/klauspost/compress/zstd"
 	"github.com/oklog/ulid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -34,6 +34,7 @@ import (
 	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/etree"
 	"github.com/rupor-github/fb2converter/state"
+	"github.com/rupor-github/fb2converter/utils"
 )
 
 // InputFmt defines type of input we are processing.
@@ -47,8 +48,10 @@ const (
 
 // Various directories used across the program
 const (
+	DirKfx        = "kfx"
+	DirEpub       = "epub"
 	DirContent    = "OEBPS"
-	DirMata       = "META-INF"
+	DirMeta       = "META-INF"
 	DirImages     = "images"
 	DirFonts      = "fonts"
 	DirVignettes  = "vignettes"
@@ -90,13 +93,15 @@ type Processor struct {
 	speechTransform *config.Transformation
 	dashTransform   *config.Transformation
 	metaOverwrite   *config.MetaInfo
-	kindlegenPath   string
+	kindlegenPath   string // For mobi/azw3 - full path to kindlegen executable
+	kpviewerPath    string // For KPF/KFX - full path to kpv executable
+	sqllitePath     string // To unwrap KPF - full path to sqllite executable
 }
 
 // NewFB2 creates FB2 book processor and prepares necessary temporary directories.
 func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, overwrite bool, format OutputFmt, env *state.LocalEnv) (*Processor, error) {
 
-	kindle := format == OAzw3 || format == OMobi
+	kindle := format == OAzw3 || format == OMobi || format == OKfx
 
 	u, err := uuid.NewRandom()
 	if err != nil {
@@ -163,8 +168,15 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 
 	if kindle {
 		// Fail early
-		if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
-			return nil, err
+		switch format {
+		case OMobi, OAzw3:
+			if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
+				return nil, err
+			}
+		case OKfx:
+			if p.kpviewerPath, err = env.Cfg.GetKPVPath(); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -188,16 +200,12 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get working directory")
 		}
-		tmpd := filepath.Join(wd, "fb2c_deb")
-		if err = os.MkdirAll(tmpd, 0700); err != nil {
-			return nil, errors.Wrap(err, "unable to create debug directory")
-		}
 		t := time.Now()
 		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to allocate ULID")
 		}
-		p.tmpDir = filepath.Join(tmpd, ulid.String()+"_"+filepath.Base(src))
+		p.tmpDir = filepath.Join(wd, strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
 			return nil, errors.Wrap(err, "unable to create temporary directory")
 		}
@@ -311,21 +319,19 @@ func (p *Processor) Process() error {
 		if p.env.Debug && p.kind == InFb2 {
 			// Dump processed book for debugging
 			bname := filepath.Base(p.src)
-			dump, err := os.Create(filepath.Join(p.tmpDir, strings.TrimSuffix(bname, filepath.Ext(p.src))+"-dump.gz"))
+			dump, err := os.Create(filepath.Join(p.tmpDir, strings.TrimSuffix(bname, filepath.Ext(p.src))+"-dump.zst"))
 			if err != nil {
 				p.env.Log.Debug("Unable to create file to dump internal state to", zap.Error(err))
 				return
 			}
 			defer dump.Close()
 
-			zdump, err := gzip.NewWriterLevel(dump, gzip.BestSpeed)
+			zdump, err := zstd.NewWriter(dump, zstd.WithEncoderLevel(zstd.SpeedFastest))
 			if err != nil {
 				p.env.Log.Debug("Unable to compress internal state dump", zap.Error(err))
 			}
 			defer zdump.Close()
 
-			zdump.Name = bname
-			zdump.Comment = "fb2c debug dump"
 			p.Book.Dump(zdump)
 		}
 	}()
@@ -381,7 +387,7 @@ func (p *Processor) Save() (string, error) {
 	start := time.Now()
 	p.env.Log.Debug("Saving content - starting",
 		zap.String("tmp", p.tmpDir),
-		zap.String("content", DirContent),
+		zap.String("content", filepath.Join(DirEpub, DirContent)),
 	)
 	defer func(start time.Time) {
 		p.env.Log.Debug("Saving content - done", zap.Duration("elapsed", time.Since(start)))
@@ -417,6 +423,9 @@ func (p *Processor) Save() (string, error) {
 		err = p.FinalizeMOBI(fname)
 	case OAzw3:
 		err = p.FinalizeAZW3(fname)
+	case OKfx:
+		// TODO: kfx
+		// err = p.FinalizeKFX(fname)
 	}
 	return fname, err
 }
@@ -827,7 +836,7 @@ func (p *Processor) processNotes() error {
 
 	for _, el := range p.doc.FindElements("./FictionBook/body[@name]") {
 		name := getAttrValue(el, "name")
-		if !IsOneOf(name, p.env.Cfg.Doc.Notes.BodyNames) {
+		if !utils.IsOneOfIgnoreCase(name, p.env.Cfg.Doc.Notes.BodyNames) {
 			continue
 		}
 		for _, section := range el.ChildElements() {
@@ -884,7 +893,7 @@ func (p *Processor) processBinaries() error {
 				id:      id,
 				ct:      "image/svg+xml",
 				fname:   fmt.Sprintf("bin%08d.svg", i),
-				relpath: filepath.Join(DirContent, DirImages),
+				relpath: filepath.Join(DirEpub, DirContent, DirImages),
 				imgType: "svg",
 				data:    data,
 			})
@@ -926,7 +935,7 @@ func (p *Processor) processBinaries() error {
 			id:      id,
 			ct:      detectedCT,
 			fname:   fmt.Sprintf("bin%08d.%s", i, imgType),
-			relpath: filepath.Join(DirContent, DirImages),
+			relpath: filepath.Join(DirEpub, DirContent, DirImages),
 			img:     img,
 			imgType: imgType,
 			data:    data,
@@ -1003,7 +1012,7 @@ func (p *Processor) processImages() error {
 					if p.metaOverwrite != nil && len(p.metaOverwrite.CoverImage) > 0 {
 						var (
 							err error
-							b   = &binImage{log: p.env.Log, relpath: filepath.Join(DirContent, DirImages)}
+							b   = &binImage{log: p.env.Log, relpath: filepath.Join(DirEpub, DirContent, DirImages)}
 						)
 						fname := p.metaOverwrite.CoverImage
 						if !filepath.IsAbs(fname) {
@@ -1031,7 +1040,7 @@ func (p *Processor) processImages() error {
 				}
 			}
 		}
-	} else if p.env.Cfg.Doc.Cover.Default || p.format == OMobi || p.format == OAzw3 {
+	} else if p.env.Cfg.Doc.Cover.Default || p.format == OMobi || p.format == OAzw3 || p.format == OKfx {
 		// For Kindle we always supply cover image if none is present, for others - only if asked to
 		b, err := p.getDefaultCover(len(p.Book.Images))
 		if err != nil {

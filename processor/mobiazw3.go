@@ -124,7 +124,7 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 // generateIntermediateContent produces temporary mobi file, presently by running kindlegen and returns its full path.
 func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 
-	workDir := filepath.Join(p.tmpDir, DirContent)
+	workDir := filepath.Join(p.tmpDir, DirEpub, DirContent)
 	if p.kind == InEpub {
 		workDir = p.tmpDir
 	}

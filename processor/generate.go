@@ -99,7 +99,7 @@ func (p *Processor) generateCover() error {
 		)
 	}(start)
 
-	kindle := p.format == OMobi || p.format == OAzw3
+	kindle := p.format == OMobi || p.format == OAzw3 || p.format == OKfx
 	w, h := p.env.Cfg.Doc.Cover.Width, p.env.Cfg.Doc.Cover.Height
 
 	var cover *binImage
@@ -323,12 +323,12 @@ func (p *Processor) prepareStylesheet() error {
 		case isTTFFontFile(fname, data):
 			d.id = fmt.Sprintf("font%d", index+1)
 			d.fname = filepath.Base(fname)
-			d.relpath = filepath.Join(DirContent, DirFonts)
+			d.relpath = filepath.Join(DirEpub, DirContent, DirFonts)
 			d.ct = "application/x-font-ttf"
 		case isOTFFontFile(fname, data):
 			d.id = fmt.Sprintf("font%d", index+1)
 			d.fname = filepath.Base(fname)
-			d.relpath = filepath.Join(DirContent, DirFonts)
+			d.relpath = filepath.Join(DirEpub, DirContent, DirFonts)
 			d.ct = "application/opentype"
 		default:
 			if strings.EqualFold(filepath.Ext(fname), ".ttf") || strings.EqualFold(filepath.Ext(fname), ".otf") {
@@ -337,7 +337,7 @@ func (p *Processor) prepareStylesheet() error {
 			}
 			d.id = fmt.Sprintf("css_data%d", index+1)
 			d.fname = "css_" + filepath.Base(fname)
-			d.relpath = filepath.Join(DirContent, DirImages)
+			d.relpath = filepath.Join(DirEpub, DirContent, DirImages)
 			d.ct = mime.TypeByExtension(filepath.Ext(fname))
 		}
 		p.Book.Data = append(p.Book.Data, d)
@@ -424,7 +424,7 @@ func (p *Processor) generateOPF() error {
 	to, f := p.ctx().createOPF("content")
 	p.Book.Files = append(p.Book.Files, f)
 
-	kindle := p.format == OMobi || p.format == OAzw3
+	kindle := p.format == OMobi || p.format == OAzw3 || p.format == OKfx
 
 	// Metadata generation
 
@@ -514,10 +514,14 @@ func (p *Processor) generateOPF() error {
 		if f.transient&dataNotForManifest != 0 {
 			continue
 		}
+		p := strings.TrimPrefix(f.relpath, DirEpub)
+		p = strings.TrimPrefix(p, string(filepath.Separator))
+		p = strings.TrimPrefix(p, DirContent)
+		p = strings.TrimPrefix(p, string(filepath.Separator))
 		man.AddSame("item",
 			attr("id", f.id),
 			attr("media-type", f.ct),
-			attr("href", path.Join(strings.TrimPrefix(strings.TrimPrefix(f.relpath, DirContent), string(filepath.Separator)), f.fname)))
+			attr("href", path.Join(p, f.fname)))
 	}
 
 	// Spine generation
@@ -587,6 +591,7 @@ func (p *Processor) generateMeta() error {
 		&dataFile{
 			id:        "mimetype",
 			fname:     "mimetype",
+			relpath:   DirEpub,
 			transient: dataNotForSpline | dataNotForManifest,
 			ct:        "text/plain",
 			data:      []byte(`application/epub+zip`),

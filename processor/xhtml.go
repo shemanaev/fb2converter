@@ -18,6 +18,7 @@ import (
 
 	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/etree"
+	"github.com/rupor-github/fb2converter/utils"
 )
 
 // processBody parses fb2 document body and produces formatted output.
@@ -41,7 +42,7 @@ func (p *Processor) processBody(index int, from *etree.Element) (err error) {
 		)
 	}(start)
 
-	if p.notesMode == NDefault || !IsOneOf(p.ctx().bodyName, p.env.Cfg.Doc.Notes.BodyNames) {
+	if p.notesMode == NDefault || !utils.IsOneOfIgnoreCase(p.ctx().bodyName, p.env.Cfg.Doc.Notes.BodyNames) {
 		// initialize first XHTML buffer
 		to, f := p.ctx().createXHTML("")
 		p.Book.Files = append(p.Book.Files, f)

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/rupor-github/fb2converter/etree"
+	"github.com/rupor-github/fb2converter/utils"
 )
 
 var attr = etree.NewAttr
@@ -20,7 +21,7 @@ func getAttrValue(e *etree.Element, key string) string {
 func extractText(e *etree.Element, head bool) string {
 	res := e.Text()
 	for _, c := range e.ChildElements() {
-		if IsOneOf(c.Tag, []string{"p", "div"}) {
+		if utils.IsOneOfIgnoreCase(c.Tag, []string{"p", "div"}) {
 			res += "\n" + extractText(c, false)
 		} else {
 			res += extractText(c, false)

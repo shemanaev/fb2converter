@@ -5,11 +5,24 @@ package config
 import (
 	"os"
 	"strings"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh/terminal"
 )
+
+// EnableColorOutput checks if colorized output is possible.
+func EnableColorOutput(stream *os.File) bool {
+	return terminal.IsTerminal(int(stream.Fd()))
+}
 
 // kindlegen provides OS specific part of default kindlegen location
 func kindlegen() string {
 	return "kindlegen"
+}
+
+// kpv returns OS specific path where Kindle Previewer is installed by default.
+func kpv() (string, error) {
+	return "", ErrNoKPVForOS
 }
 
 // CleanFileName removes not allowed characters form file name.

@@ -25,21 +25,27 @@ import (
 // processBook processes single FB2 file. "src" is part of the source path (always including file name) relative to the original
 // path. When actual file was specified it will be just base file name without a path. When looking inside archive or directory
 // it will be relative path inside archive or directory (including base file name).
-func processBook(r io.Reader, enc srcEncoding, src, dst string, nodirs, stk, overwrite bool, format processor.OutputFmt, env *state.LocalEnv) error {
+func processBook(r io.Reader, enc srcEncoding, src, dst string, nodirs, stk, overwrite bool, format processor.OutputFmt, env *state.LocalEnv) (err error) {
 
-	var fname string
+	var (
+		fname string
+		p     *processor.Processor
+	)
 
 	start := time.Now()
 	env.Log.Info("Conversion starting", zap.String("from", src))
 	defer func(start time.Time) {
-		if r := recover(); r != nil {
+		switch r := recover(); {
+		case r != nil:
 			env.Log.Error("Conversion ended with panic", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname), zap.ByteString("stack", debug.Stack()))
-		} else {
+		case err != nil:
+			env.Log.Info("Conversion ended with error", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname))
+		default:
 			env.Log.Info("Conversion completed", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname))
 		}
 	}(start)
 
-	p, err := processor.NewFB2(selectReader(r, enc), enc == encUnknown, src, dst, nodirs, stk, overwrite, format, env)
+	p, err = processor.NewFB2(selectReader(r, enc), enc == encUnknown, src, dst, nodirs, stk, overwrite, format, env)
 	if err != nil {
 		return err
 	}
@@ -189,7 +195,7 @@ func Convert(ctx *cli.Context) (err error) {
 		}
 	case config.MhlEpub:
 		format = processor.ParseFmtString(env.Cfg.Fb2Epub.OutputFormat)
-		if format == processor.UnsupportedOutputFmt || format == processor.OMobi || format == processor.OAzw3 {
+		if format == processor.UnsupportedOutputFmt || format == processor.OMobi || format == processor.OAzw3 || format == processor.OKfx {
 			env.Log.Warn("Unknown output format in MHL mode requested, switching to epub", zap.String("format", env.Cfg.Fb2Epub.OutputFormat))
 			format = processor.OEpub
 		}

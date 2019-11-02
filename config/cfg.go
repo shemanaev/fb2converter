@@ -7,10 +7,13 @@ import (
 	goerr "errors"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/blang/semver"
 	"github.com/micro/go-micro/config"
 	"github.com/micro/go-micro/config/encoder"
 	jsonenc "github.com/micro/go-micro/config/encoder/json"
@@ -24,6 +27,9 @@ import (
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
+
+// ErrNoKPVForOS - not all platforms have Kindle Previewer
+var ErrNoKPVForOS = errors.New("kindle previewer is not supported on this OS")
 
 //  Internal constants defining if program was invoked via MyHomeLib wrappers.
 const (
@@ -179,6 +185,10 @@ type Doc struct {
 		PageMap          string `json:"generate_apnx"`
 		ForceASIN        bool   `json:"force_asin_on_azw3"`
 	} `json:"kindlegen"`
+	//
+	KPreViewer struct {
+		Path string `json:"path"`
+	} `json:"kindle_previewer"`
 }
 
 // names of supported vignettes
@@ -464,6 +474,49 @@ func (conf *Config) GetKindlegenPath() (string, error) {
 		return "", errors.Wrap(err, "unable to find kindlegen")
 	}
 	return fname, nil
+}
+
+var (
+	reKPVver           = regexp.MustCompile(`^Kindle Previewer ([0-9]+\.[0-9]+\.[0-9]+) Copyright (c) Amazon.com$`)
+	minSupportedKPVver = semver.Version{Major: 3, Minor: 32, Patch: 0}
+)
+
+// GetKPVPath provides platform specific path to the kindle previever executable.
+func (conf *Config) GetKPVPath() (string, error) {
+
+	var err error
+
+	kpath := conf.Doc.KPreViewer.Path
+	if len(kpath) > 0 {
+		if !filepath.IsAbs(kpath) {
+			return "", errors.Errorf("path to kindle previewer must be absolute path: %s", kpath)
+		}
+	} else {
+		kpath, err = kpv()
+		if err != nil {
+			return "", errors.Wrap(err, "problem getting kindle previewer path")
+		}
+	}
+	if _, err := os.Stat(kpath); err != nil {
+		return "", errors.Wrapf(err, "unable to find kindle previewer: %s", kpath)
+	}
+
+	var out []byte
+	if out, err = exec.Command(kpath, "-help").CombinedOutput(); err != nil {
+		return "", errors.Wrapf(err, "unable to run kindle previewer: %s", kpath)
+	}
+	res := reKPVver.FindSubmatch(out)
+	if len(res) < 2 {
+		return "", errors.New("unable to find kindle previewer version")
+	}
+	var ver semver.Version
+	if ver, err = semver.Parse(string(res[1])); err != nil {
+		return "", errors.Wrap(err, "unable to parse kindle previewer version")
+	}
+	if minSupportedKPVver.GT(ver) {
+		errors.Errorf("unsupported version %s of kindle previewer is installed (required version %s or newer)", ver, minSupportedKPVver)
+	}
+	return kpath, nil
 }
 
 // GetActualBytes returns actual configuration, including fields initialized by default.

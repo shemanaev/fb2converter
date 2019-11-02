@@ -48,6 +48,8 @@ func (p *Processor) writeEPUB(fname string) error {
 	}
 	defer f.Close()
 
+	contentDir := filepath.Join(p.tmpDir, DirEpub)
+
 	epub := zip.NewWriter(f)
 	defer epub.Close()
 
@@ -65,13 +67,13 @@ func (p *Processor) writeEPUB(fname string) error {
 			// ignore itself
 			return nil
 		}
-		if content && filepath.ToSlash(filepath.Dir(path)) == filepath.ToSlash(p.tmpDir) {
+		if content && filepath.ToSlash(filepath.Dir(path)) == filepath.ToSlash(contentDir) {
 			// ignore everything in the root directory
 			return nil
 		}
 
 		// Get the path of the file relative to the source folder
-		rel, err := filepath.Rel(p.tmpDir, path)
+		rel, err := filepath.Rel(contentDir, path)
 		if err != nil {
 			return err
 		}
@@ -109,7 +111,7 @@ func (p *Processor) writeEPUB(fname string) error {
 	}
 
 	// mimetype should be the first entry in epub
-	mt := filepath.Join(p.tmpDir, "mimetype")
+	mt := filepath.Join(contentDir, "mimetype")
 	info, err := os.Stat(mt)
 	if err != nil {
 		return errors.Wrap(err, "unable to find mimetype file")
@@ -120,7 +122,7 @@ func (p *Processor) writeEPUB(fname string) error {
 
 	content = true
 
-	if err = filepath.Walk(p.tmpDir, saveFile); err != nil {
+	if err = filepath.Walk(contentDir, saveFile); err != nil {
 		return errors.Wrap(err, "unable to add file to EPUB")
 	}
 	return nil
@@ -134,7 +136,7 @@ func (p *Processor) FinalizeEPUB(fname string) error {
 			return errors.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
-		if err = os.Remove(fname); err != nil {
+		if err := os.Remove(fname); err != nil {
 			return err
 		}
 	} else if !os.IsNotExist(err) {

@@ -13,6 +13,7 @@ const (
 	OKepub                                // kepub
 	OAzw3                                 // azw3
 	OMobi                                 // mobi
+	OKfx                                  // kfx
 	UnsupportedOutputFmt                  //
 )
 
