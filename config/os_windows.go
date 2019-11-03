@@ -3,11 +3,16 @@
 package config
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
-	"github.com/pkg/errors"
+	"github.com/rupor-github/fb2converter/config/winpty"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -52,20 +57,6 @@ func EnableColorOutput(stream *os.File) bool {
 	return true
 }
 
-// kindlegen provides OS specific part of default kindlegen location
-func kindlegen() string {
-	return "kindlegen.exe"
-}
-
-// kpv returns OS specific path where Kindle Previewer is installed by default.
-func kpv() (string, error) {
-	res, err := windows.KnownFolderPath(windows.FOLDERID_LocalAppData, windows.KF_FLAG_DEFAULT)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to find local AppData folder")
-	}
-	return filepath.Join(res, "Amazon", "Kindle Previewer 3", "Kindle Previewer 3.exe"), nil
-}
-
 // CleanFileName removes not allowed characters form file name.
 func CleanFileName(in string) string {
 	out := strings.Map(func(sym rune) rune {
@@ -101,4 +92,85 @@ func FindConverter(expath string) string {
 		}
 	}
 	return ""
+}
+
+// sqlite provides OS specific part of default sqlite location
+func sqlite() string {
+	return "sqlite3.exe"
+}
+
+// kindlegen provides OS specific part of default kindlegen location
+func kindlegen() string {
+	return "kindlegen.exe"
+}
+
+// kpv returns OS specific path where Kindle Previewer is installed by default.
+func kpv() (string, error) {
+	res, err := windows.KnownFolderPath(windows.FOLDERID_LocalAppData, windows.KF_FLAG_DEFAULT)
+	if err != nil {
+		return "", fmt.Errorf("unable to find local AppData folder: %w", err)
+	}
+	return filepath.Join(res, "Amazon", "Kindle Previewer 3", "Kindle Previewer 3.exe"), nil
+}
+
+// execute kpv using winpty to intercept output.
+// NOTE: on Windows kpv attaches to console and directly writes to screen buffer, so reading stdout does not work.
+func kpvexec(exepath string, arg ...string) ([]string, error) {
+
+	expath, err := os.Executable()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get program path: %w", err)
+	}
+
+	pty, err := winpty.New(filepath.Dir(expath))
+	if err != nil {
+		return nil, fmt.Errorf("failed to allocate winpty: %w", err)
+	}
+
+	err = pty.Open()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open winpty: %w", err)
+	}
+	defer pty.Close()
+
+	_ = pty.SetWinsize(200, 60)
+
+	out := make([]string, 0, 32)
+	go func() {
+		// read kpv stdout
+		scanner := bufio.NewScanner(pty.StdOut)
+		for scanner.Scan() {
+			out = append(out, scanner.Text())
+		}
+	}()
+
+	cmd := exec.Command(exepath, arg...)
+	err = pty.Run(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to run winpty: %w", err)
+	}
+
+	err = pty.Wait()
+	if err != nil {
+		var exitCode uint32
+		winptyError, ok := err.(*winpty.ExitError)
+		if ok {
+			exitCode = winptyError.WaitStatus.ExitCode
+		} else {
+			exitError, ok := err.(*exec.ExitError)
+			if !ok {
+				return nil, fmt.Errorf("kindle previewer failed with unexpected error: %w", err)
+			}
+			waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
+			if !ok {
+				return nil, fmt.Errorf("kindle previewer failed with unexpected status: %w", err)
+			}
+			if waitStatus.Signaled() {
+				return nil, errors.New("kindle previewer was interrupted")
+			}
+			exitCode = uint32(waitStatus.ExitStatus())
+		}
+		return nil, fmt.Errorf("kindle previewer ended with code %d", exitCode)
+	}
+	return out, nil
 }

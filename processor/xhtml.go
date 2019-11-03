@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"errors"
 	"fmt"
 	"html"
 	"net/url"
@@ -13,7 +14,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
@@ -783,7 +783,7 @@ func transferImage(p *Processor, from, to *etree.Element) error {
 		if p.notFound == nil {
 			p.notFound, err = p.getNotFoundImage(len(p.Book.Images))
 			if err != nil {
-				return errors.Wrap(err, "unable to load not-found image")
+				return fmt.Errorf("unable to load not-found image: %w", err)
 			}
 			p.Book.Images = append(p.Book.Images, p.notFound)
 		}

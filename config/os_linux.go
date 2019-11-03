@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

@@ -24,7 +24,6 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/klauspost/compress/zstd"
 	"github.com/oklog/ulid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/language"
@@ -93,9 +92,8 @@ type Processor struct {
 	speechTransform *config.Transformation
 	dashTransform   *config.Transformation
 	metaOverwrite   *config.MetaInfo
-	kindlegenPath   string // For mobi/azw3 - full path to kindlegen executable
-	kpviewerPath    string // For KPF/KFX - full path to kpv executable
-	sqllitePath     string // To unwrap KPF - full path to sqllite executable
+	kindlegenPath   string         // For mobi/azw3 - full path to kindlegen executable
+	kpvEnv          *config.KPVEnv // For KPF/KFX - initialized kpv environment
 }
 
 // NewFB2 creates FB2 book processor and prepares necessary temporary directories.
@@ -105,7 +103,7 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 
 	u, err := uuid.NewRandom()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to generate UUID")
+		return nil, fmt.Errorf("unable to generate UUID: %w", err)
 	}
 
 	notes := ParseNotesString(env.Cfg.Doc.Notes.Mode)
@@ -170,11 +168,11 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 		// Fail early
 		switch format {
 		case OMobi, OAzw3:
-			if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
+			if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(env.Log); err != nil {
 				return nil, err
 			}
 		case OKfx:
-			if p.kpviewerPath, err = env.Cfg.GetKPVPath(); err != nil {
+			if p.kpvEnv, err = env.Cfg.GetKPVEnv(env.Log); err != nil {
 				return nil, err
 			}
 		}
@@ -198,21 +196,21 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 	if env.Debug {
 		wd, err := os.Getwd()
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get working directory")
+			return nil, fmt.Errorf("unable to get working directory: %w", err)
 		}
 		t := time.Now()
 		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to allocate ULID")
+			return nil, fmt.Errorf("unable to allocate ULID: %w", err)
 		}
 		p.tmpDir = filepath.Join(wd, strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
-			return nil, errors.Wrap(err, "unable to create temporary directory")
+			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
 	} else {
 		p.tmpDir, err = ioutil.TempDir("", "fb2c-")
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to create temporary directory")
+			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
 	}
 
@@ -225,7 +223,7 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 
 	// Read and parse fb2
 	if _, err := p.doc.ReadFrom(r); err != nil {
-		return nil, errors.Wrap(err, "unable to parse FB2")
+		return nil, fmt.Errorf("unable to parse FB2: %w", err)
 	}
 
 	// Clean document
@@ -236,7 +234,7 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 		doc := p.doc.Copy()
 		doc.IndentTabs()
 		if err := doc.WriteToFile(filepath.Join(p.tmpDir, filepath.Base(src))); err != nil {
-			return nil, errors.Wrap(err, "unable to write XML")
+			return nil, fmt.Errorf("unable to write XML: %w", err)
 		}
 	}
 
@@ -261,7 +259,7 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 	}
 
 	// Fail early
-	if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
+	if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(env.Log); err != nil {
 		return nil, err
 	}
 
@@ -269,25 +267,25 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 	if env.Debug {
 		wd, err := os.Getwd()
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get working directory")
+			return nil, fmt.Errorf("unable to get working directory: %w", err)
 		}
 		tmpd := filepath.Join(wd, "fb2c_deb")
 		if err = os.MkdirAll(tmpd, 0700); err != nil {
-			return nil, errors.Wrap(err, "unable to create debug directory")
+			return nil, fmt.Errorf("unable to create debug directory: %w", err)
 		}
 		t := time.Now()
 		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to allocate ULID")
+			return nil, fmt.Errorf("unable to allocate ULID: %w", err)
 		}
 		p.tmpDir = filepath.Join(tmpd, ulid.String()+"_"+filepath.Base(src))
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
-			return nil, errors.Wrap(err, "unable to create temporary directory")
+			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
 	} else {
 		p.tmpDir, err = ioutil.TempDir("", "fb2c-")
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to create temporary directory")
+			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
 	}
 
@@ -296,10 +294,10 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 	if destination, err := os.Create(filepath.Join(p.tmpDir, filepath.Base(src))); err == nil {
 		defer destination.Close()
 		if _, err := io.Copy(destination, r); err != nil {
-			return nil, errors.Wrap(err, "unable to copy source")
+			return nil, fmt.Errorf("unable to copy source: %w", err)
 		}
 	} else {
-		return nil, errors.Wrap(err, "unable to copy source")
+		return nil, fmt.Errorf("unable to copy source: %w", err)
 	}
 
 	// we are ready to convert document
@@ -424,8 +422,7 @@ func (p *Processor) Save() (string, error) {
 	case OAzw3:
 		err = p.FinalizeAZW3(fname)
 	case OKfx:
-		// TODO: kfx
-		// err = p.FinalizeKFX(fname)
+		err = p.FinalizeKFX(fname)
 	}
 	return fname, err
 }
@@ -462,7 +459,7 @@ func (p *Processor) SendToKindle(fname string) error {
 	d := gomail.NewDialer(p.env.Cfg.SMTPConfig.Server, p.env.Cfg.SMTPConfig.Port, p.env.Cfg.SMTPConfig.User, p.env.Cfg.SMTPConfig.Password)
 
 	if err := d.DialAndSend(m); err != nil {
-		return errors.Wrap(err, "SentToKindle failed")
+		return fmt.Errorf("SentToKindle failed: %w", err)
 	}
 
 	if p.env.Cfg.SMTPConfig.DeleteOnSuccess {
@@ -874,15 +871,15 @@ func (p *Processor) processBinaries() error {
 			if strings.HasPrefix(err.Error(), errString) {
 				i, er := strconv.ParseInt(strings.TrimPrefix(err.Error(), errString), 10, 64)
 				if er != nil {
-					return errors.Wrapf(err, "unable to decode binary (%s)", id)
+					return fmt.Errorf("unable to decode binary (%s): %w", id, err)
 				}
 				// try to ignore everything after error position
 				data, er = base64.StdEncoding.DecodeString(s[0:i])
 				if er != nil {
-					return errors.Wrapf(err, "unable to decode binary (%s)", id)
+					return fmt.Errorf("unable to decode binary (%s): %w", id, err)
 				}
 			} else {
-				return errors.Wrapf(err, "unable to decode binary (%s)", id)
+				return fmt.Errorf("unable to decode binary (%s): %w", id, err)
 			}
 		}
 

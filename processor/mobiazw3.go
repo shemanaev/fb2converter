@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/processor/internal/mobi"
@@ -20,14 +19,14 @@ import (
 // FinalizeMOBI produces final mobi file out of previously saved temporary files.
 func (p *Processor) FinalizeMOBI(fname string) error {
 
-	tmp, err := p.generateIntermediateContent(fname)
+	tmp, err := p.generateIntermediateMobiContent(fname)
 	if err != nil {
-		return errors.Wrap(err, "unable to generate intermediate content")
+		return fmt.Errorf("unable to generate intermediate content: %w", err)
 	}
 
 	if _, err := os.Stat(fname); err == nil {
 		if !p.env.Debug && !p.overwrite {
-			return errors.Errorf("output file already exists: %s", fname)
+			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
 		if err = os.Remove(fname); err != nil {
@@ -36,33 +35,33 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 	} else if !os.IsNotExist(err) {
 		return err
 	} else if err := os.MkdirAll(filepath.Dir(fname), 0700); err != nil {
-		return errors.Wrap(err, "unable to create output directory")
+		return fmt.Errorf("unable to create output directory: %w", err)
 	}
 
 	if p.env.Cfg.Doc.Kindlegen.NoOptimization {
 		if err := CopyFile(tmp, fname); err != nil {
-			return errors.Wrap(err, "unable to copy resulting MOBI")
+			return fmt.Errorf("unable to copy resulting MOBI: %w", err)
 		}
 	} else {
 		var u uuid.UUID
 		if p.Book == nil {
 			u, err = uuid.NewRandom()
 			if err != nil {
-				return errors.Wrap(err, "unable to generate UUID")
+				return fmt.Errorf("unable to generate UUID: %w", err)
 			}
 		} else {
 			u = p.Book.ID
 		}
 		splitter, err := mobi.NewSplitter(tmp, u, true, p.env.Cfg.Doc.Kindlegen.RemovePersonal, false, p.env.Log)
 		if err != nil {
-			return errors.Wrap(err, "unable to parse intermediate content file")
+			return fmt.Errorf("unable to parse intermediate content file: %w", err)
 		}
 		if err := splitter.SaveResult(fname); err != nil {
-			return errors.Wrap(err, "unable to save resulting MOBI")
+			return fmt.Errorf("unable to save resulting MOBI: %w", err)
 		}
 		if p.kindlePageMap != APNXNone {
 			if err := splitter.SavePageMap(fname, p.kindlePageMap == APNXEInk); err != nil {
-				return errors.Wrap(err, "unable to save resulting pagemap")
+				return fmt.Errorf("unable to save resulting pagemap: %w", err)
 			}
 		}
 	}
@@ -72,14 +71,14 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 // FinalizeAZW3 produces final azw3 file out of previously saved temporary files.
 func (p *Processor) FinalizeAZW3(fname string) error {
 
-	tmp, err := p.generateIntermediateContent(fname)
+	tmp, err := p.generateIntermediateMobiContent(fname)
 	if err != nil {
-		return errors.Wrap(err, "unable to generate intermediate content")
+		return fmt.Errorf("unable to generate intermediate content: %w", err)
 	}
 
 	if _, err := os.Stat(fname); err == nil {
 		if !p.env.Debug && !p.overwrite {
-			return errors.Errorf("output file already exists: %s", fname)
+			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
 		if err = os.Remove(fname); err != nil {
@@ -88,41 +87,41 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 	} else if !os.IsNotExist(err) {
 		return err
 	} else if err := os.MkdirAll(filepath.Dir(fname), 0700); err != nil {
-		return errors.Wrap(err, "unable to create output directory")
+		return fmt.Errorf("unable to create output directory: %w", err)
 	}
 
 	if p.env.Cfg.Doc.Kindlegen.NoOptimization {
 		if err := CopyFile(tmp, fname); err != nil {
-			return errors.Wrap(err, "unable to copy resulting AZW3")
+			return fmt.Errorf("unable to copy resulting AZW3: %w", err)
 		}
 	} else {
 		var u uuid.UUID
 		if p.Book == nil {
 			u, err = uuid.NewRandom()
 			if err != nil {
-				return errors.Wrap(err, "unable to generate UUID")
+				return fmt.Errorf("unable to generate UUID: %w", err)
 			}
 		} else {
 			u = p.Book.ID
 		}
 		splitter, err := mobi.NewSplitter(tmp, u, false, p.env.Cfg.Doc.Kindlegen.RemovePersonal, p.env.Cfg.Doc.Kindlegen.ForceASIN, p.env.Log)
 		if err != nil {
-			return errors.Wrap(err, "unable to parse intermediate content file")
+			return fmt.Errorf("unable to parse intermediate content file: %w", err)
 		}
 		if err := splitter.SaveResult(fname); err != nil {
-			return errors.Wrap(err, "unable to save resulting AZW3")
+			return fmt.Errorf("unable to save resulting AZW3: %w", err)
 		}
 		if p.kindlePageMap != APNXNone {
 			if err := splitter.SavePageMap(fname, p.kindlePageMap == APNXEInk); err != nil {
-				return errors.Wrap(err, "unable to save resulting pagemap")
+				return fmt.Errorf("unable to save resulting pagemap: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-// generateIntermediateContent produces temporary mobi file, presently by running kindlegen and returns its full path.
-func (p *Processor) generateIntermediateContent(fname string) (string, error) {
+// generateIntermediateMobiContent produces temporary mobi file, presently by running kindlegen and returns its full path.
+func (p *Processor) generateIntermediateMobiContent(fname string) (string, error) {
 
 	workDir := filepath.Join(p.tmpDir, DirEpub, DirContent)
 	if p.kind == InEpub {
@@ -146,9 +145,9 @@ func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 	cmd := exec.Command(p.kindlegenPath, args...)
 
 	start := time.Now()
-	p.env.Log.Debug("kindlegen staring")
+	p.env.Log.Debug("kindlegen is staring")
 	defer func(start time.Time) {
-		p.env.Log.Debug("kindlegen done",
+		p.env.Log.Debug("kindlegen is done",
 			zap.Duration("elapsed", time.Since(start)),
 			zap.String("path", cmd.Path),
 			zap.Strings("args", args),
@@ -157,11 +156,11 @@ func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to redirect kindlegen stdout")
+		return "", fmt.Errorf("unable to redirect kindlegen stdout: %w", err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		return "", errors.Wrap(err, "unable to start kindlegen")
+		return "", fmt.Errorf("unable to start kindlegen: %w", err)
 	}
 
 	// read and print kindlegen stdout
@@ -170,7 +169,7 @@ func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 		p.env.Log.Debug(scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		return "", errors.Wrap(err, "kindlegen stdout pipe broken")
+		return "", fmt.Errorf("kindlegen stdout pipe broken: %w", err)
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -188,16 +187,16 @@ func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 				// success
 				if _, err := os.Stat(workFile); err != nil {
 					// kindlegen lied
-					return "", errors.Wrap(err, "kindlegen did not return an error, but there is no content")
+					return "", fmt.Errorf("kindlegen did not return an error, but there is no content: %w", err)
 				}
 			case 2:
 				// error - unable to create mobi
 				fallthrough
 			default:
-				return "", errors.Wrap(err, "kindlegen returned error")
+				return "", fmt.Errorf("kindlegen returned error: %w", err)
 			}
 		} else {
-			return "", errors.Wrap(err, "kindlegen returned error")
+			return "", fmt.Errorf("kindlegen returned error: %w", err)
 		}
 	}
 	return filepath.Join(workDir, workFile), nil

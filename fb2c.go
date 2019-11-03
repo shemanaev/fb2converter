@@ -5,7 +5,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/pkg/errors"
 	"github.com/pkg/profile"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
@@ -46,7 +45,7 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	// Prepare configuration
 	fconfig := c.GlobalString("config")
 	if env.Cfg, err = config.BuildConfig(fconfig); err != nil {
-		return cli.NewExitError(errors.Wrapf(err, "%sunable to build configuration", errPrefix), errCode)
+		return cli.NewExitError(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
 	}
 
 	// We may want to do some profiling
@@ -78,7 +77,7 @@ func (w *appWrapper) beforeCommandRun(c *cli.Context) error {
 	// Prepare logs
 	env.Log, err = env.Cfg.PrepareLog()
 	if err != nil {
-		return cli.NewExitError(errors.Wrapf(err, "%sunable to create logs", errPrefix), errCode)
+		return cli.NewExitError(fmt.Errorf("%sunable to create logs: %w", errPrefix, err), errCode)
 	}
 
 	w.log = env.Log

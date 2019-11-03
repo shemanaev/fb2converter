@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -19,7 +20,6 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -81,7 +81,7 @@ func (s *Splitter) SavePageMap(fname string, eink bool) error {
 	if eink {
 		dir = filepath.Join(dir, base+".sdr")
 		if err := os.MkdirAll(dir, 0700); err != nil {
-			return errors.Wrap(err, "unable to create pagemap directory")
+			return fmt.Errorf("unable to create pagemap directory: %w", err)
 		}
 	}
 	base += ".apnx"

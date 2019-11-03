@@ -18,7 +18,6 @@ require (
 	github.com/micro/go-micro v1.9.1
 	github.com/neurosnap/sentences v1.0.6 // indirect
 	github.com/oklog/ulid v1.3.1
-	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/shuLhan/go-bindata v3.4.0+incompatible
