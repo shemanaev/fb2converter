@@ -19,11 +19,6 @@ func kindlegen() string {
 	return "kindlegen"
 }
 
-// kpv returns OS specific path where Kindle Previewer is installed by default.
-func kpv() (string, error) {
-	return "", ErrNoKPVForOS
-}
-
 // CleanFileName removes not allowed characters form file name.
 func CleanFileName(in string) string {
 	out := strings.TrimLeft(strings.Map(func(sym rune) rune {
@@ -41,4 +36,19 @@ func CleanFileName(in string) string {
 // FindConverter  - used on Windows to support myhomelib
 func FindConverter(_ string) string {
 	return ""
+}
+
+// sqlite provides os specific part of default sqlite location
+func sqlite() string {
+	return "sqlite3"
+}
+
+// kpv returns os specific path where kindle previewer is installed by default.
+func kpv() (string, error) {
+	return "", ErrNoKPVForOS
+}
+
+// execute kpv - we need this as Windows requires special handling.
+func kpvexec(exepath string, arg ...string) ([]string, error) {
+	return nil, ErrNoKPVForOS
 }
