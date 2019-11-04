@@ -1,13 +1,16 @@
 package config
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 
 	"github.com/blang/semver"
 	"go.uber.org/zap"
@@ -44,6 +47,56 @@ func (e *KPVEnv) ExecKPV(arg ...string) error {
 	for _, s := range out {
 		if len(s) > 0 {
 			e.log.Debug(s)
+		}
+	}
+	return nil
+}
+
+// ExecSQL runs sqlite cli shell.
+func (e *KPVEnv) ExecSQL(stdin io.Reader, outDir string, arg ...string) error {
+
+	cmd := exec.Command(e.sqlPath, arg...)
+	cmd.Stdin = stdin
+	cmd.Dir = outDir
+
+	out, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("unable to redirect sqlite stderr: %w", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("unable to start sqlite: %w", err)
+	}
+
+	// read and print kindlegen stdout
+	scanner := bufio.NewScanner(out)
+	for scanner.Scan() {
+		e.log.Debug("sqlite", zap.String("stderr", scanner.Text()))
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("sqlite stderr pipe broken: %w", err)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			if len(ee.Stderr) > 0 {
+				e.log.Error("sqlite", zap.String("stderr", string(ee.Stderr)), zap.Error(err))
+			}
+			ws := ee.Sys().(syscall.WaitStatus)
+			switch ws.ExitStatus() {
+			case 0:
+				// success
+			case 1:
+				// warnings
+				e.log.Warn("sqlite has some warnings, see log for details")
+			case 2:
+				// error - unable to dump KDF
+				fallthrough
+			default:
+				return fmt.Errorf("sqlite returned error: %w", err)
+			}
+		} else {
+			return fmt.Errorf("sqlite returned error: %w", err)
 		}
 	}
 	return nil

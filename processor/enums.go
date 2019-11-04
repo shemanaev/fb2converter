@@ -140,3 +140,27 @@ func ParseStampPlacementString(format string) StampPlacement {
 	}
 	return UnsupportedStampPlacement
 }
+
+// KDFTable enumerates supported tables in kdf container.
+type KDFTable int
+
+// Actual tables of interest.
+const (
+	TableSchema         KDFTable = iota // sqlite_master
+	TableKFXID                          // kfxid_translation
+	TableFragmentProps                  // fragment_properties
+	TableFragments                      // fragments
+	TableCapabilities                   // capabilities
+	UnsupportedKDFTable                 //
+)
+
+// ParseKDFTableSring converts string to enum value. Case insensitive.
+func ParseKDFTableSring(name string) KDFTable {
+
+	for i := TableSchema; i < UnsupportedKDFTable; i++ {
+		if strings.EqualFold(i.String(), name) {
+			return i
+		}
+	}
+	return UnsupportedKDFTable
+}

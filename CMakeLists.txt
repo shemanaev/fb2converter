@@ -225,7 +225,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         DEPENDS ${PROJECT_BINARY_DIR}/stringer
             ${PROJECT_SOURCE_DIR}/processor/enums.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
-        ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement # ,KDFTable
+        ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement,KDFTable
                 -output ${PROJECT_SOURCE_DIR}/processor/enums_string.go
                 ${PROJECT_SOURCE_DIR}/processor/enums.go
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"

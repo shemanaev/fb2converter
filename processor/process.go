@@ -47,6 +47,7 @@ const (
 
 // Various directories used across the program
 const (
+	DirKdf        = "KDF"
 	DirKfx        = "kfx"
 	DirEpub       = "epub"
 	DirContent    = "OEBPS"
