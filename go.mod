@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/disintegration/imaging v1.6.1
 	github.com/fogleman/gg v1.3.0
@@ -15,10 +16,10 @@ require (
 	github.com/hidez8891/zip v1.0.0-go1.11
 	github.com/klauspost/compress v1.9.1
 	github.com/micro/go-micro v1.9.1
+	github.com/neurosnap/sentences v1.0.6 // indirect
 	github.com/oklog/ulid v1.3.1
-	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0
-	github.com/rupor-github/fb2converter/internal/kfx v0.0.0-00010101000000-000000000000
+	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/shuLhan/go-bindata v3.4.0+incompatible
 	github.com/urfave/cli v1.21.0
 	go.uber.org/zap v1.12.0
@@ -28,8 +29,7 @@ require (
 	golang.org/x/sys v0.0.0-20190904154756-749cb33beabd
 	golang.org/x/text v0.3.2
 	golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/neurosnap/sentences.v1 v1.0.6
 )
-
-replace github.com/rupor-github/fb2converter/internal/kfx => /mnt/e/projects/books/fb2converter_kfx/processor/internal/kfx

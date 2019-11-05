@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/internal/kfx"
+	"github.com/rupor-github/fb2converter/processor/kfx"
 	"github.com/rupor-github/fb2converter/utils"
 )
 

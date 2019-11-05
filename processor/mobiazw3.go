@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/processor/internal/mobi"
+	"github.com/rupor-github/fb2converter/processor/mobi"
 )
 
 // FinalizeMOBI produces final mobi file out of previously saved temporary files.
