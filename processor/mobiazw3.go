@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/processor/internal/mobi"
 )
 
@@ -37,6 +38,15 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 	} else if err := os.MkdirAll(filepath.Dir(fname), 0700); err != nil {
 		return fmt.Errorf("unable to create output directory: %w", err)
 	}
+
+	start := time.Now()
+	p.env.Log.Debug("Postprocessing - start")
+	defer func(start time.Time) {
+		p.env.Log.Debug("Postprocessing - done",
+			zap.Duration("elapsed", time.Since(start)),
+			zap.String("file", tmp),
+		)
+	}(start)
 
 	if p.env.Cfg.Doc.Kindlegen.NoOptimization {
 		if err := CopyFile(tmp, fname); err != nil {
@@ -90,6 +100,15 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 		return fmt.Errorf("unable to create output directory: %w", err)
 	}
 
+	start := time.Now()
+	p.env.Log.Debug("Postprocessing - start")
+	defer func(start time.Time) {
+		p.env.Log.Debug("Postprocessing - done",
+			zap.Duration("elapsed", time.Since(start)),
+			zap.String("file", tmp),
+		)
+	}(start)
+
 	if p.env.Cfg.Doc.Kindlegen.NoOptimization {
 		if err := CopyFile(tmp, fname); err != nil {
 			return fmt.Errorf("unable to copy resulting AZW3: %w", err)
@@ -123,7 +142,7 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 // generateIntermediateMobiContent produces temporary mobi file, presently by running kindlegen and returns its full path.
 func (p *Processor) generateIntermediateMobiContent(fname string) (string, error) {
 
-	workDir := filepath.Join(p.tmpDir, DirEpub, DirContent)
+	workDir := filepath.Join(p.tmpDir, config.DirEpub, config.DirContent)
 	if p.kind == InEpub {
 		workDir = p.tmpDir
 	}

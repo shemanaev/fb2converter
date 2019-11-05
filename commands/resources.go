@@ -6,7 +6,7 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/rupor-github/fb2converter/processor"
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/state"
 	"github.com/rupor-github/fb2converter/static"
 )
@@ -37,9 +37,9 @@ func ExportResources(ctx *cli.Context) error {
 	}
 
 	ignoreNames := map[string]bool{
-		processor.DirHyphenator: true,
-		processor.DirResources:  true,
-		processor.DirSentences:  true,
+		config.DirHyphenator: true,
+		config.DirResources:  true,
+		config.DirSentences:  true,
 	}
 
 	if dir, err := static.AssetDir(""); err == nil {

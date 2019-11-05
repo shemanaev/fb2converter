@@ -1,11 +1,9 @@
 package processor
 
 import (
-	"bytes"
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,42 +11,71 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/archive"
 	"github.com/rupor-github/fb2converter/config"
+	"github.com/rupor-github/fb2converter/internal/kfx"
 	"github.com/rupor-github/fb2converter/utils"
 )
-
-type parsedBook struct {
-}
 
 // FinalizeKFX produces final KFX file out of previously saved temporary files.
 func (p *Processor) FinalizeKFX(fname string) error {
 
-	_, err := p.generateIntermediateKPFContent(fname)
+	outDir := filepath.Join(p.tmpDir, config.DirKfx)
+	if err := os.MkdirAll(outDir, 0700); err != nil {
+		return fmt.Errorf("unable to create data directories for Kindle Previewer: %w", err)
+	}
+
+	book, err := p.generateIntermediateKPFContent(outDir)
 	if err != nil {
 		return fmt.Errorf("unable to generate intermediate content: %w", err)
 	}
+
+	if _, err := os.Stat(fname); err == nil {
+		if !p.env.Debug && !p.overwrite {
+			return fmt.Errorf("output file already exists: %s", fname)
+		}
+		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
+		if err = os.Remove(fname); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	} else if err := os.MkdirAll(filepath.Dir(fname), 0700); err != nil {
+		return fmt.Errorf("unable to create output directory: %w", err)
+	}
+
+	start := time.Now()
+	p.env.Log.Debug("Postprocessing - start")
+	defer func(start time.Time) {
+		p.env.Log.Debug("Postprocessing - done",
+			zap.Duration("elapsed", time.Since(start)),
+			zap.String("file", book),
+		)
+	}(start)
+
+	packer, err := kfx.NewPacker(book, outDir, p.kpvEnv, p.env.Log)
+	if err != nil {
+		return fmt.Errorf("unable to parse intermediate content file: %w", err)
+	}
+	_ = packer
+	// if err := splitter.SaveResult(fname); err != nil {
+	// 	return fmt.Errorf("unable to save resulting MOBI: %w", err)
+	// }
 	return fmt.Errorf("FIX ME DONE: %s", fname)
 }
 
 // generateIntermediateKPFContent produces temporary KPF file, presently by running Kindle Previewer and returns its full path.
-func (p *Processor) generateIntermediateKPFContent(fname string) (*parsedBook, error) {
-
-	outDir := filepath.Join(p.tmpDir, DirKfx)
-	if err := os.MkdirAll(outDir, 0700); err != nil {
-		return nil, fmt.Errorf("unable to create data directories for Kindle Previewer: %w", err)
-	}
+func (p *Processor) generateIntermediateKPFContent(outDir string) (string, error) {
 
 	args := make([]string, 0, 10)
-	args = append(args, filepath.Join(p.tmpDir, DirEpub, DirContent, "content.opf"))
+	args = append(args, filepath.Join(p.tmpDir, config.DirEpub, config.DirContent, "content.opf"))
 	args = append(args, "-convert")
 	args = append(args, "-locale", "en")
 	args = append(args, "-output", outDir)
 
 	start := time.Now()
-	p.env.Log.Debug("Kindle Previewer is staring")
+	p.env.Log.Debug("Kindle Previewer - start")
 	defer func(start time.Time) {
-		p.env.Log.Debug("Kindle Previewer is done",
+		p.env.Log.Debug("Kindle Previewer - done",
 			zap.Duration("elapsed", time.Since(start)),
 			zap.Stringer("env", p.kpvEnv),
 			zap.Strings("args", args),
@@ -56,21 +83,13 @@ func (p *Processor) generateIntermediateKPFContent(fname string) (*parsedBook, e
 	}(start)
 
 	if err := p.kpvEnv.ExecKPV(args...); err != nil {
-		return nil, err
+		return "", err
 	}
 	book, err := checkResults(outDir, p.env.Log)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if err := unpackContainer(p.kpvEnv, book, outDir); err != nil {
-		return nil, err
-	}
-
-	return parseTables(outDir)
-}
-
-func parseTables(outDir string) (*parsedBook, error) {
-	return nil, nil
+	return book, nil
 }
 
 func checkResults(outDir string, log *zap.Logger) (string, error) {
@@ -201,71 +220,4 @@ func logDetails(fname string, log *zap.Logger) {
 			log.Info("KPV details", zap.String(t, records[i][hdrDescription]))
 		}
 	}
-}
-
-// unpackContainer unpacks KPF file and dumps KDF container tables.
-func unpackContainer(kpv *config.KPVEnv, book, outDir string) error {
-
-	kdfDir := filepath.Join(outDir, DirKdf)
-	if err := os.MkdirAll(outDir, 0700); err != nil {
-		return fmt.Errorf("unable to create directories for KDF contaner: %w", err)
-	}
-	if err := archive.Unzip(book, kdfDir); err != nil {
-		return fmt.Errorf("unable to unzip KDF contaner: %w", err)
-	}
-	kdfBook := filepath.Join(kdfDir, "resources", "book.kdf")
-	dbFile := filepath.Join(outDir, "book.sqlite3")
-	if err := unwrapSQLiteDB(kdfBook, dbFile); err != nil {
-		return fmt.Errorf("unable to unwrap KDF contaner: %w", err)
-	}
-	if err := dumpKDFContainerContent(kpv, dbFile, outDir); err != nil {
-		return fmt.Errorf("unable to dump KDF tables: %w", err)
-	}
-	return nil
-}
-
-// unwrapSQLiteDB restores proper SQLite DB out of KDF file.
-func unwrapSQLiteDB(from, to string) error {
-
-	const (
-		wrapperOffset      = 0x400
-		wrapperLength      = 0x400
-		wrapperFrameLength = 0x100000
-	)
-
-	var (
-		data        []byte
-		err         error
-		signature   = []byte("SQLite format 3\x00")
-		fingerprint = []byte("\xfa\x50\x0a\x5f")
-		header      = []byte("\x01\x00\x00\x40\x20")
-	)
-
-	if data, err = ioutil.ReadFile(from); err != nil {
-		return err
-	}
-	if len(data) <= len(signature) || len(data) < 2*wrapperOffset {
-		return fmt.Errorf("unexpected SQLite file length: %d", len(data))
-	}
-	if !bytes.Equal(signature, data[:len(signature)]) {
-		return fmt.Errorf("unexpected SQLite file signature: %v", data[:len(signature)])
-	}
-
-	unwrapped := make([]byte, 0, len(data))
-	prev, curr := 0, wrapperOffset
-	for ; curr+wrapperLength <= len(data); prev, curr = curr+wrapperLength, curr+wrapperLength+wrapperFrameLength {
-		if !bytes.Equal(fingerprint, data[curr:curr+len(fingerprint)]) {
-			return fmt.Errorf("unexpected fingerprint: %v", data[curr:curr+len(fingerprint)])
-		}
-		if !bytes.Equal(header, data[curr+len(fingerprint):curr+len(fingerprint)+len(header)]) {
-			return fmt.Errorf("unexpected fingerprint header: %v", data[curr+len(fingerprint):curr+len(fingerprint)+len(header)])
-		}
-		unwrapped = append(unwrapped, data[prev:curr]...)
-	}
-	unwrapped = append(unwrapped, data[prev:]...)
-
-	if err = ioutil.WriteFile(to, unwrapped, 0644); err != nil {
-		return err
-	}
-	return nil
 }

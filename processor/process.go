@@ -45,22 +45,6 @@ const (
 	InEpub
 )
 
-// Various directories used across the program
-const (
-	DirKdf        = "KDF"
-	DirKfx        = "kfx"
-	DirEpub       = "epub"
-	DirContent    = "OEBPS"
-	DirMeta       = "META-INF"
-	DirImages     = "images"
-	DirFonts      = "fonts"
-	DirVignettes  = "vignettes"
-	DirProfile    = "profiles"
-	DirHyphenator = "dictionaries"
-	DirResources  = "resources"
-	DirSentences  = "sentences"
-)
-
 // will be used to derive UUIDs from non-parsable book ID
 var nameSpaceFB2 = uuid.MustParse("09aa0c17-ca72-42d3-afef-75911e5d7646")
 
@@ -384,9 +368,9 @@ func (p *Processor) Process() error {
 func (p *Processor) Save() (string, error) {
 
 	start := time.Now()
-	p.env.Log.Debug("Saving content - starting",
+	p.env.Log.Debug("Saving content - start",
 		zap.String("tmp", p.tmpDir),
-		zap.String("content", filepath.Join(DirEpub, DirContent)),
+		zap.String("content", filepath.Join(config.DirEpub, config.DirContent)),
 	)
 	defer func(start time.Time) {
 		p.env.Log.Debug("Saving content - done", zap.Duration("elapsed", time.Since(start)))
@@ -891,7 +875,7 @@ func (p *Processor) processBinaries() error {
 				id:      id,
 				ct:      "image/svg+xml",
 				fname:   fmt.Sprintf("bin%08d.svg", i),
-				relpath: filepath.Join(DirEpub, DirContent, DirImages),
+				relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 				imgType: "svg",
 				data:    data,
 			})
@@ -933,7 +917,7 @@ func (p *Processor) processBinaries() error {
 			id:      id,
 			ct:      detectedCT,
 			fname:   fmt.Sprintf("bin%08d.%s", i, imgType),
-			relpath: filepath.Join(DirEpub, DirContent, DirImages),
+			relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 			img:     img,
 			imgType: imgType,
 			data:    data,
@@ -1010,7 +994,7 @@ func (p *Processor) processImages() error {
 					if p.metaOverwrite != nil && len(p.metaOverwrite.CoverImage) > 0 {
 						var (
 							err error
-							b   = &binImage{log: p.env.Log, relpath: filepath.Join(DirEpub, DirContent, DirImages)}
+							b   = &binImage{log: p.env.Log, relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages)}
 						)
 						fname := p.metaOverwrite.CoverImage
 						if !filepath.IsAbs(fname) {

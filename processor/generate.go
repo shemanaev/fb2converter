@@ -16,6 +16,7 @@ import (
 	"github.com/gosimple/slug"
 	"go.uber.org/zap"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/etree"
 )
 
@@ -164,7 +165,7 @@ func (p *Processor) generateCover() error {
 		).AddNext("image",
 			attr("width", fmt.Sprintf("%d", w)),
 			attr("height", fmt.Sprintf("%d", h)),
-			attr("xlink:href", path.Join(DirImages, cover.fname)),
+			attr("xlink:href", path.Join(config.DirImages, cover.fname)),
 		)
 	}
 	return nil
@@ -323,12 +324,12 @@ func (p *Processor) prepareStylesheet() error {
 		case isTTFFontFile(fname, data):
 			d.id = fmt.Sprintf("font%d", index+1)
 			d.fname = filepath.Base(fname)
-			d.relpath = filepath.Join(DirEpub, DirContent, DirFonts)
+			d.relpath = filepath.Join(config.DirEpub, config.DirContent, config.DirFonts)
 			d.ct = "application/x-font-ttf"
 		case isOTFFontFile(fname, data):
 			d.id = fmt.Sprintf("font%d", index+1)
 			d.fname = filepath.Base(fname)
-			d.relpath = filepath.Join(DirEpub, DirContent, DirFonts)
+			d.relpath = filepath.Join(config.DirEpub, config.DirContent, config.DirFonts)
 			d.ct = "application/opentype"
 		default:
 			if strings.EqualFold(filepath.Ext(fname), ".ttf") || strings.EqualFold(filepath.Ext(fname), ".otf") {
@@ -337,11 +338,11 @@ func (p *Processor) prepareStylesheet() error {
 			}
 			d.id = fmt.Sprintf("css_data%d", index+1)
 			d.fname = "css_" + filepath.Base(fname)
-			d.relpath = filepath.Join(DirEpub, DirContent, DirImages)
+			d.relpath = filepath.Join(config.DirEpub, config.DirContent, config.DirImages)
 			d.ct = mime.TypeByExtension(filepath.Ext(fname))
 		}
 		p.Book.Data = append(p.Book.Data, d)
-		return path.Join(DirFonts, d.fname)
+		return path.Join(config.DirFonts, d.fname)
 	}
 
 	// Get all references from stylesheet
@@ -493,13 +494,13 @@ func (p *Processor) generateOPF() error {
 			man.AddSame("item",
 				attr("id", "book-cover-image"),
 				attr("media-type", f.ct),
-				attr("href", path.Join(DirImages, f.fname)),
+				attr("href", path.Join(config.DirImages, f.fname)),
 				attr("properties", "cover-image"))
 		} else {
 			man.AddSame("item",
 				attr("id", fmt.Sprintf("image%d", i+1)),
 				attr("media-type", f.ct),
-				attr("href", path.Join(DirImages, f.fname)))
+				attr("href", path.Join(config.DirImages, f.fname)))
 		}
 	}
 
@@ -507,16 +508,16 @@ func (p *Processor) generateOPF() error {
 		man.AddSame("item",
 			attr("id", fmt.Sprintf("vignette%d", i+1)),
 			attr("media-type", f.ct),
-			attr("href", path.Join(DirVignettes, f.fname)))
+			attr("href", path.Join(config.DirVignettes, f.fname)))
 	}
 
 	for _, f := range p.Book.Data {
 		if f.transient&dataNotForManifest != 0 {
 			continue
 		}
-		p := strings.TrimPrefix(f.relpath, DirEpub)
+		p := strings.TrimPrefix(f.relpath, config.DirEpub)
 		p = strings.TrimPrefix(p, string(filepath.Separator))
-		p = strings.TrimPrefix(p, DirContent)
+		p = strings.TrimPrefix(p, config.DirContent)
 		p = strings.TrimPrefix(p, string(filepath.Separator))
 		man.AddSame("item",
 			attr("id", f.id),
@@ -591,7 +592,7 @@ func (p *Processor) generateMeta() error {
 		&dataFile{
 			id:        "mimetype",
 			fname:     "mimetype",
-			relpath:   DirEpub,
+			relpath:   config.DirEpub,
 			transient: dataNotForSpline | dataNotForManifest,
 			ct:        "text/plain",
 			data:      []byte(`application/epub+zip`),

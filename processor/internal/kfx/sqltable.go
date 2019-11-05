@@ -1,4 +1,4 @@
-package processor
+package kfx
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"github.com/rupor-github/fb2converter/config"
 )
 
+// I do not want to use CGO - so I will use sqlite cli shell instead to dump tables.
 func dumpKDFContainerContent(kpv *config.KPVEnv, dbfile, outDir string) error {
 
 	tmpl := template.Must(template.New("query").Parse(`
@@ -46,9 +47,10 @@ var numFields = []int{
 	2, // TableCapabilities
 }
 
-func readTable(table KDFTable, outDir string, processRecord func(max int, rec []string) error) error {
+// read sqlite table form dump file and parse information.
+func readTable(table KDFTable, dir string, processRecord func(max int, rec []string) error) error {
 
-	fname := filepath.Join(outDir, table.String()+".dat")
+	fname := filepath.Join(dir, table.String()+".dat")
 	f, err := os.Open(fname)
 	if err != nil {
 		return fmt.Errorf("unable to open table [%s]: %w", table, err)

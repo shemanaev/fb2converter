@@ -10,6 +10,7 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/static"
 )
 
@@ -58,7 +59,7 @@ func (p *Processor) stampCover(im image.Image) (image.Image, error) {
 			return nil, err
 		}
 	} else {
-		data, err := static.Asset(path.Join(DirResources, "LinLibertine_RBah.ttf"))
+		data, err := static.Asset(path.Join(config.DirResources, "LinLibertine_RBah.ttf"))
 		if err != nil {
 			return nil, fmt.Errorf("unable to get default stamp font: %w", err)
 		}

@@ -10,6 +10,8 @@ import (
 
 	fixzip "github.com/hidez8891/zip"
 	"go.uber.org/zap"
+
+	"github.com/rupor-github/fb2converter/config"
 )
 
 func zipRemoveDataDescriptors(from, to string) error {
@@ -48,7 +50,7 @@ func (p *Processor) writeEPUB(fname string) error {
 	}
 	defer f.Close()
 
-	contentDir := filepath.Join(p.tmpDir, DirEpub)
+	contentDir := filepath.Join(p.tmpDir, config.DirEpub)
 
 	epub := zip.NewWriter(f)
 	defer epub.Close()

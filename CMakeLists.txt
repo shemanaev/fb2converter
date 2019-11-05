@@ -127,7 +127,7 @@ endif()
 ########################################################################################################
 
 add_custom_target(bin_fb2c ALL
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
         ${PROJECT_SOURCE_DIR}/static/files.go
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} build -trimpath -o ${PROJECT_BINARY_DIR}/fb2c${CMAKE_EXECUTABLE_SUFFIX}
@@ -172,7 +172,7 @@ add_custom_target(test_all
     COMMENT "Running ALL tests...")
 
 add_custom_target(test_processor
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
         ${PROJECT_SOURCE_DIR}/static/files.go
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on # GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
@@ -182,7 +182,7 @@ add_custom_target(test_processor
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_custom_target(test_hyphenator
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
         ${PROJECT_SOURCE_DIR}/static/files.go
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on # GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
@@ -199,7 +199,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     # main target with race detector
     add_custom_target(bin_fb2c_race
-        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
             ${PROJECT_SOURCE_DIR}/static/files.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
             ${GO_EXECUTABLE} build -race -o ${PROJECT_BINARY_DIR}/fb2c_race${CMAKE_EXECUTABLE_SUFFIX}
@@ -221,13 +221,17 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_target(bin_stringer
         DEPENDS ${PROJECT_BINARY_DIR}/stringer)
 
-    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
         DEPENDS ${PROJECT_BINARY_DIR}/stringer
-            ${PROJECT_SOURCE_DIR}/processor/enums.go
+            ${PROJECT_SOURCE_DIR}/processor/enums.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
-        ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement,KDFTable
-                -output ${PROJECT_SOURCE_DIR}/processor/enums_string.go
-                ${PROJECT_SOURCE_DIR}/processor/enums.go
+            ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement
+                    -output ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+                    ${PROJECT_SOURCE_DIR}/processor/enums.go
+        COMMAND GOPATH=${GO_PATH} GO111MODULE=on
+            ${PROJECT_BINARY_DIR}/stringer -linecomment -type KDFTable
+                    -output ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
+                    ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums.go
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Generating stringer interfaces")
 
@@ -284,7 +288,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 
     add_custom_target(lint
-        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/internal/kfx/enums_string.go
             ${PROJECT_SOURCE_DIR}/static/files.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on ${GO_LINTER} run
         COMMENT "Mega-linting project with ${GO_LINTER}..."

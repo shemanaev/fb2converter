@@ -33,6 +33,22 @@ const (
 	MhlUnknown
 )
 
+// Various directories used across the program
+const (
+	DirKdf        = "KDF"
+	DirKfx        = "kfx"
+	DirEpub       = "epub"
+	DirContent    = "OEBPS"
+	DirMeta       = "META-INF"
+	DirImages     = "images"
+	DirFonts      = "fonts"
+	DirVignettes  = "vignettes"
+	DirProfile    = "profiles"
+	DirHyphenator = "dictionaries"
+	DirResources  = "resources"
+	DirSentences  = "sentences"
+)
+
 // Logger configuration for single logger.
 type Logger struct {
 	Level       string `json:"level"`
