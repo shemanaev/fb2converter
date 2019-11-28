@@ -126,9 +126,15 @@ endif()
 # main target - always out of date, "go build" will figure it out
 ########################################################################################################
 
+set(GENERATED_DEPS
+    ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go
+    ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
+    ${PROJECT_SOURCE_DIR}/static/files.go
+)
+
 add_custom_target(bin_fb2c ALL
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-        ${PROJECT_SOURCE_DIR}/static/files.go
+    DEPENDS ${GENERATED_DEPS}
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} build -trimpath -o ${PROJECT_BINARY_DIR}/fb2c${CMAKE_EXECUTABLE_SUFFIX}
         -ldflags='-X main.LastGitCommit=${GIT_HASH}'
@@ -172,8 +178,7 @@ add_custom_target(test_all
     COMMENT "Running ALL tests...")
 
 add_custom_target(test_processor
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-        ${PROJECT_SOURCE_DIR}/static/files.go
+    DEPENDS ${GENERATED_DEPS}
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on # GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
             -coverprofile=${PROJECT_BINARY_DIR}/test_processor.out
@@ -182,13 +187,21 @@ add_custom_target(test_processor
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_custom_target(test_hyphenator
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-        ${PROJECT_SOURCE_DIR}/static/files.go
+    DEPENDS ${GENERATED_DEPS}
     COMMAND GOPATH=${GO_PATH} GO111MODULE=on # GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
         ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
             -coverprofile=${PROJECT_BINARY_DIR}/test_hyphenator.out
             ${GO_MOD_ARGS} github.com/rupor-github/fb2converter/hyphenator
     COMMENT "hyphenator tests..."
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_custom_target(test_kfx
+    DEPENDS ${GENERATED_DEPS}
+    COMMAND GOPATH=${GO_PATH} GO111MODULE=on # GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
+        ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
+            -coverprofile=${PROJECT_BINARY_DIR}/test_kfx.out
+            ${GO_MOD_ARGS} github.com/rupor-github/fb2converter/processor/kfx
+    COMMENT "kfx tests..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 ########################################################################################################
@@ -199,8 +212,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     # main target with race detector
     add_custom_target(bin_fb2c_race
-        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-            ${PROJECT_SOURCE_DIR}/static/files.go
+        DEPENDS ${GENERATED_DEPS}
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on GOOS=${CROSS_GOOS} GOARCH=${CROSS_GOARCH}
             ${GO_EXECUTABLE} build -race -o ${PROJECT_BINARY_DIR}/fb2c_race${CMAKE_EXECUTABLE_SUFFIX}
             -ldflags='-X main.LastGitCommit=${GIT_HASH}'
@@ -221,17 +233,22 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_target(bin_stringer
         DEPENDS ${PROJECT_BINARY_DIR}/stringer)
 
-    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
+    add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+            ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
         DEPENDS ${PROJECT_BINARY_DIR}/stringer
-            ${PROJECT_SOURCE_DIR}/processor/enums.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums.go
+            ${PROJECT_SOURCE_DIR}/processor/enums.go ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable.go ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
             ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement
                     -output ${PROJECT_SOURCE_DIR}/processor/enums_string.go
                     ${PROJECT_SOURCE_DIR}/processor/enums.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
             ${PROJECT_BINARY_DIR}/stringer -linecomment -type KDFTable
-                    -output ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-                    ${PROJECT_SOURCE_DIR}/processor/kfx/enums.go
+                    -output ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go
+                    ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable.go
+        COMMAND GOPATH=${GO_PATH} GO111MODULE=on
+            ${PROJECT_BINARY_DIR}/stringer -linecomment -type valueCode
+                    -output ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
+                    ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue.go
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Generating stringer interfaces")
 
@@ -288,8 +305,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 
     add_custom_target(lint
-        DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/enums_string.go
-            ${PROJECT_SOURCE_DIR}/static/files.go
+        DEPENDS ${GENERATED_DEPS}
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on ${GO_LINTER} run
         COMMENT "Mega-linting project with ${GO_LINTER}..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

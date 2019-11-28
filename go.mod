@@ -6,6 +6,8 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/cockroachdb/apd/v2 v2.0.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/disintegration/imaging v1.6.1
 	github.com/fogleman/gg v1.3.0
@@ -15,6 +17,8 @@ require (
 	github.com/h2non/filetype v1.0.10
 	github.com/hidez8891/zip v1.0.0-go1.11
 	github.com/klauspost/compress v1.9.1
+	github.com/lib/pq v1.2.0 // indirect
+	github.com/maxatome/go-testdeep v1.1.2
 	github.com/micro/go-micro v1.9.1
 	github.com/neurosnap/sentences v1.0.6 // indirect
 	github.com/oklog/ulid v1.3.1

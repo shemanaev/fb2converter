@@ -40,9 +40,9 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 	}
 
 	start := time.Now()
-	p.env.Log.Debug("Postprocessing - start")
+	p.env.Log.Debug("Repacking - start")
 	defer func(start time.Time) {
-		p.env.Log.Debug("Postprocessing - done",
+		p.env.Log.Debug("Repacking - done",
 			zap.Duration("elapsed", time.Since(start)),
 			zap.String("file", tmp),
 		)
@@ -101,9 +101,9 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 	}
 
 	start := time.Now()
-	p.env.Log.Debug("Postprocessing - start")
+	p.env.Log.Debug("Repacking - start")
 	defer func(start time.Time) {
-		p.env.Log.Debug("Postprocessing - done",
+		p.env.Log.Debug("Repacking - done",
 			zap.Duration("elapsed", time.Since(start)),
 			zap.String("file", tmp),
 		)

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/archive"
@@ -19,6 +20,7 @@ import (
 )
 
 type parsed struct {
+	elementType map[string]string
 }
 
 // Packer - unpacks KPF/KDF and produces single file KFX for e-Ink devices.
@@ -132,6 +134,13 @@ func unsq(in string) string {
 	return string(runes)
 }
 
+var (
+	// ErrDRM returned when data in container has DRM.
+	ErrDRM = errors.New("unable to decode blob: book container has DRM and cannot be converted")
+	// DRM signature
+	sigDRM = []byte("\xeaDRMION\xee")
+)
+
 func unsqBytes(in string) ([]byte, error) {
 
 	runeLen := utf8.RuneCountInString(in)
@@ -153,51 +162,56 @@ func unsqBytes(in string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode blob: %w", err)
 	}
+	if bytes.HasPrefix(res, sigDRM) {
+		return nil, ErrDRM
+	}
 	return res, nil
 }
 
 func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 
+	p := &parsed{
+		elementType: make(map[string]string),
+	}
+
 	// Parse KDF schema
 	tables := make(map[KDFTable]bool)
-	if err := readTable(TableSchema, kdfDir, func(max int, rec []string) error {
+	if err := readTable(TableSchema, kdfDir, func(max int, rec []string) (bool, error) {
 		if t := ParseKDFTableSring(unsq(rec[0])); t != UnsupportedKDFTable {
 			tables[t] = true
 		} else {
 			log.Debug("Found unknown KDF table", zap.String("name", rec[0]))
 		}
-		return nil
+		return true, nil
 	}); err != nil {
 		return nil, err
 	}
 
 	// Add symbols to book's local ION table
 	if _, ok := tables[TableKFXID]; ok {
-		if err := readTable(TableKFXID, kdfDir, func(max int, rec []string) error {
+		if err := readTable(TableKFXID, kdfDir, func(max int, rec []string) (bool, error) {
 			eid, err := strconv.Atoi(unsq(rec[0]))
 			if err != nil {
-				return err
+				return false, err
 			}
 			// FIXME: add to ION symbol table instead of logging
 			log.Debug("KXFID found", zap.Int("eid", eid), zap.String("kfxid", unsq(rec[1])))
-			return nil
+			return true, nil
 		}); err != nil {
 			return nil, err
 		}
 	}
 
 	if _, ok := tables[TableFragmentProps]; ok {
-		if err := readTable(TableFragmentProps, kdfDir, func(max int, rec []string) error {
+		if err := readTable(TableFragmentProps, kdfDir, func(max int, rec []string) (bool, error) {
 			switch unsq(rec[1]) {
 			case "child":
-				break
 			case "element_type":
-				// FIXME: store in the map
-				// p.env.Log.Debug("PROP found", zap.String("id", unsq(rec[0])), zap.String("value", unsq(rec[2])))
+				p.elementType[unsq(rec[0])] = unsq(rec[2])
 			default:
 				log.Warn("Fragment property has unknown key", zap.Strings("rec", rec))
 			}
-			return nil
+			return true, nil
 		}); err != nil {
 			return nil, err
 		}
@@ -207,19 +221,50 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		return nil, errors.New("KPF database is missing the 'fragments' table")
 	}
 
+	// Build symbol tables
+	var (
+		maxID   = -1
+		symData []byte
+	)
+	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
+		if unsq(rec[1]) != "blob" {
+			return true, nil
+		}
+		data, err := unsqBytes(rec[2])
+		if err != nil {
+			return false, err
+		}
+		if unsq(rec[0]) == "$ion_symbol_table" {
+			symData = data
+			log.Debug("KDF symbols import found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)))
+		}
+		if unsq(rec[0]) == "max_id" {
+			log.Debug("KDF max_id found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])))
+		}
+		return !(maxID >= 0 && len(symData) > 0), nil
+	}); err != nil {
+		return nil, err
+	}
+
+	vals, err := readValueStream(symData)
+	if err != nil {
+		return nil, err
+	}
+	println("AAAAAAAAAA", spew.Sdump(vals))
+
 	// Read fragments
-	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) error {
+	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
 		if unsq(rec[0]) == "$ion_symbol_table" {
 			data, err := unsqBytes(rec[2])
 			if err != nil {
-				return err
+				return false, err
 			}
 			log.Debug("SYMTABLE found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)), zap.String("table", string(data)))
 		}
 		if unsq(rec[0]) == "max_id" {
 			data, err := unsqBytes(rec[2])
 			if err != nil {
-				return err
+				return false, err
 			}
 			log.Debug("MAX_ID found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)), zap.String("data", string(data)))
 		}
@@ -228,9 +273,9 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		// 	return err
 		// }
 		// log.Debug("FRAG found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)))
-		return nil
+		return true, nil
 	}); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return p, nil
 }

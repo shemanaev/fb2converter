@@ -7,10 +7,40 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/rupor-github/fb2converter/config"
 )
+
+// KDFTable enumerates supported tables in kdf container.
+type KDFTable int
+
+// Actual tables of interest.
+// NOTE: index_info table is for dictionaries, currently not supported
+// NOTE: gc_* tables are currently unused
+const (
+	TableSchema          KDFTable = iota // sqlite_master
+	TableKFXID                           // kfxid_translation
+	TableFragmentProps                   // fragment_properties
+	TableFragments                       // fragments
+	TableCapabilities                    // capabilities
+	TableIndexInfo                       // index_info
+	TableGCFragmentProps                 // gc_fragment_properties
+	TableGCReachable                     // gc_reachable
+	UnsupportedKDFTable                  //
+)
+
+// ParseKDFTableSring converts string to enum value. Case insensitive.
+func ParseKDFTableSring(name string) KDFTable {
+
+	for i := TableSchema; i < UnsupportedKDFTable; i++ {
+		if strings.EqualFold(i.String(), name) {
+			return i
+		}
+	}
+	return UnsupportedKDFTable
+}
 
 // I do not want to use CGO - so I will use sqlite cli shell instead to dump tables.
 func dumpKDFContainerContent(kpv *config.KPVEnv, dbfile, outDir string) error {
@@ -48,7 +78,7 @@ var numFields = []int{
 }
 
 // read sqlite table form dump file and parse information.
-func readTable(table KDFTable, dir string, processRecord func(max int, rec []string) error) error {
+func readTable(table KDFTable, dir string, processRecord func(max int, rec []string) (bool, error)) error {
 
 	fname := filepath.Join(dir, table.String()+".dat")
 	f, err := os.Open(fname)
@@ -68,8 +98,10 @@ func readTable(table KDFTable, dir string, processRecord func(max int, rec []str
 		if err != nil {
 			return fmt.Errorf("unable to read table [%s]: %w", table, err)
 		}
-		if err = processRecord(r.FieldsPerRecord, record); err != nil {
+		if cont, err := processRecord(r.FieldsPerRecord, record); err != nil {
 			return fmt.Errorf("unable to process record in the table [%s]: %w", table, err)
+		} else if !cont {
+			break
 		}
 	}
 	return nil

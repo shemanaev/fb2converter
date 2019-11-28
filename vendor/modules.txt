@@ -6,6 +6,8 @@ github.com/asaskevich/govalidator
 github.com/bitly/go-simplejson
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
+# github.com/cockroachdb/apd/v2 v2.0.1
+github.com/cockroachdb/apd/v2
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/disintegration/imaging v1.6.1
@@ -49,6 +51,15 @@ github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/maxatome/go-testdeep v1.1.2
+github.com/maxatome/go-testdeep
+github.com/maxatome/go-testdeep/helpers/tdutil
+github.com/maxatome/go-testdeep/internal/ctxerr
+github.com/maxatome/go-testdeep/internal/dark
+github.com/maxatome/go-testdeep/internal/location
+github.com/maxatome/go-testdeep/internal/types
+github.com/maxatome/go-testdeep/internal/util
+github.com/maxatome/go-testdeep/internal/visited
 # github.com/micro/go-micro v1.9.1
 github.com/micro/go-micro/config
 github.com/micro/go-micro/config/encoder
@@ -66,6 +77,8 @@ github.com/micro/go-micro/config/source/file
 github.com/micro/go-micro/config/source/memory
 # github.com/oklog/ulid v1.3.1
 github.com/oklog/ulid
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # github.com/pkg/profile v1.3.0
 github.com/pkg/profile
 # github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
