@@ -126,9 +126,7 @@ func (p *Processor) generateCover() error {
 	if (kindle || p.env.Cfg.Doc.Cover.Resize) && cover.img.Bounds().Dy() < h {
 		if img := imaging.Resize(cover.img, h*cover.img.Bounds().Dx()/cover.img.Bounds().Dy(), h, imaging.Lanczos); img != nil {
 			cover.img = img
-			if kindle {
-				cover.flags |= imageKindle
-			}
+			cover.flags |= imageKindle
 		} else {
 			p.env.Log.Warn("Unable to resize cover image, using as is")
 		}
@@ -143,9 +141,7 @@ func (p *Processor) generateCover() error {
 			// nothing to do
 		default:
 			cover.img = img
-			if kindle {
-				cover.flags |= imageKindle
-			}
+			cover.flags |= imageKindle
 		}
 	}
 
