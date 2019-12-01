@@ -191,6 +191,7 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 		return "", fmt.Errorf("kindlegen stdout pipe broken: %w", err)
 	}
 
+	result := filepath.Join(workDir, workFile)
 	if err := cmd.Wait(); err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			if len(ee.Stderr) > 0 {
@@ -204,9 +205,9 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 				fallthrough
 			case 0:
 				// success
-				if _, err := os.Stat(workFile); err != nil {
+				if _, err := os.Stat(result); err != nil {
 					// kindlegen lied
-					return "", fmt.Errorf("kindlegen did not return an error, but there is no content: %w", err)
+					return "", fmt.Errorf("kindlegen did not return an error, but there is no content (%s): %w", result, err)
 				}
 			case 2:
 				// error - unable to create mobi
@@ -218,5 +219,5 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 			return "", fmt.Errorf("kindlegen returned error: %w", err)
 		}
 	}
-	return filepath.Join(workDir, workFile), nil
+	return result, nil
 }
