@@ -554,16 +554,13 @@ func transferSubtitle(p *Processor, from, to *etree.Element) error {
 
 	t := from.Text()
 	if len(t) != 0 {
-		for _, dv := range p.env.Cfg.Doc.ChapterDividers {
-			if t == dv && !p.ctx().inHeader && !p.ctx().inSubHeader && len(p.ctx().bodyName) == 0 && !p.ctx().specialParagraph {
-
-				// open next XHTML
-				var f *dataFile
-				to, f = p.ctx().createXHTML("")
-				// store it for future flushing
-				p.Book.Files = append(p.Book.Files, f)
-				p.Book.Pages[f.fname] = 0
-			}
+		if utils.IsOneOf(t, p.env.Cfg.Doc.ChapterDividers) && !p.ctx().inHeader && !p.ctx().inSubHeader && len(p.ctx().bodyName) == 0 && !p.ctx().specialParagraph {
+			// open next XHTML
+			var f *dataFile
+			to, f = p.ctx().createXHTML("")
+			// store it for future flushing
+			p.Book.Files = append(p.Book.Files, f)
+			p.Book.Pages[f.fname] = 0
 		}
 	}
 

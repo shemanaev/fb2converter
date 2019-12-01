@@ -20,7 +20,8 @@ import (
 )
 
 type parsed struct {
-	elementType map[string]string
+	translations map[uint64]string // symbols from kfxid_translation table
+	elementType  map[string]string
 }
 
 // Packer - unpacks KPF/KDF and produces single file KFX for e-Ink devices.
@@ -171,7 +172,8 @@ func unsqBytes(in string) ([]byte, error) {
 func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 
 	p := &parsed{
-		elementType: make(map[string]string),
+		translations: make(map[uint64]string),
+		elementType:  make(map[string]string),
 	}
 
 	// Parse KDF schema
@@ -187,15 +189,14 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		return nil, err
 	}
 
-	// Add symbols to book's local ION table
+	// Add symbols to book's local translation table
 	if _, ok := tables[TableKFXID]; ok {
 		if err := readTable(TableKFXID, kdfDir, func(max int, rec []string) (bool, error) {
-			eid, err := strconv.Atoi(unsq(rec[0]))
+			eid, err := strconv.ParseUint(unsq(rec[0]), 0, 64)
 			if err != nil {
 				return false, err
 			}
-			// FIXME: add to ION symbol table instead of logging
-			log.Debug("KXFID found", zap.Int("eid", eid), zap.String("kfxid", unsq(rec[1])))
+			p.translations[eid] = unsq(rec[1])
 			return true, nil
 		}); err != nil {
 			return nil, err
@@ -223,34 +224,39 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 
 	// Build symbol tables
 	var (
-		maxID   = -1
-		symData []byte
+		maxID   ionValue
+		symData []ionValue
 	)
 	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
-		if unsq(rec[1]) != "blob" {
+		id, rtype := unsq(rec[0]), unsq(rec[1])
+		if rtype != "blob" {
 			return true, nil
 		}
 		data, err := unsqBytes(rec[2])
 		if err != nil {
 			return false, err
 		}
-		if unsq(rec[0]) == "$ion_symbol_table" {
-			symData = data
-			log.Debug("KDF symbols import found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)))
+		switch id {
+		case "$ion_symbol_table":
+			symData, err = readValueStream(data)
+			if err != nil {
+				return false, err
+			}
+		case "max_id":
+			vals, err := readValueStream(data)
+			if err != nil {
+				return false, err
+			}
+			if len(vals) != 1 {
+				return false, fmt.Errorf("multiple max_id values in a stream (%d)", len(vals))
+			}
+			maxID = vals[0]
 		}
-		if unsq(rec[0]) == "max_id" {
-			log.Debug("KDF max_id found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])))
-		}
-		return !(maxID >= 0 && len(symData) > 0), nil
+		return !(maxID != nil && symData != nil), nil
 	}); err != nil {
 		return nil, err
 	}
-
-	vals, err := readValueStream(symData)
-	if err != nil {
-		return nil, err
-	}
-	println("AAAAAAAAAA", spew.Sdump(vals))
+	println("AAAAAAAAAA", spew.Sdump(symData), spew.Sdump(maxID))
 
 	// Read fragments
 	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
