@@ -78,7 +78,7 @@ var numFields = []int{
 }
 
 // read sqlite table form dump file and parse information.
-func readTable(table KDFTable, dir string, processRecord func(max int, rec []string) (bool, error)) error {
+func readTable(table KDFTable, dir string, processRecord func(fields int, rec []string) (bool, error)) error {
 
 	fname := filepath.Join(dir, table.String()+".dat")
 	f, err := os.Open(fname)

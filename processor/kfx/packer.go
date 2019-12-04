@@ -204,7 +204,7 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 	}
 
 	if _, ok := tables[TableFragmentProps]; ok {
-		if err := readTable(TableFragmentProps, kdfDir, func(max int, rec []string) (bool, error) {
+		if err := readTable(TableFragmentProps, kdfDir, func(_ int, rec []string) (bool, error) {
 			switch unsq(rec[1]) {
 			case "child":
 			case "element_type":
@@ -222,28 +222,38 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		return nil, errors.New("KPF database is missing the 'fragments' table")
 	}
 
+	readValuesFromColumn := func(field string) ([]ionValue, error) {
+		data, err := unsqBytes(field)
+		if err != nil {
+			return nil, err
+		}
+		vals, err := readValueStream(data)
+		if err != nil {
+			return nil, err
+		}
+		return vals, nil
+	}
+
 	// Build symbol tables
-	var (
-		maxID   ionValue
-		symData []ionValue
-	)
-	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
+	var maxID ionValue
+	var symData []ionValue
+	if err := readTable(TableFragments, kdfDir, func(fields int, rec []string) (bool, error) {
+		if fields < 3 {
+			return false, fmt.Errorf("wrong number of fileds in table %s - %d", TableFragments, fields)
+		}
 		id, rtype := unsq(rec[0]), unsq(rec[1])
 		if rtype != "blob" {
 			return true, nil
 		}
-		data, err := unsqBytes(rec[2])
-		if err != nil {
-			return false, err
-		}
 		switch id {
 		case "$ion_symbol_table":
-			symData, err = readValueStream(data)
+			vals, err := readValuesFromColumn(rec[2])
 			if err != nil {
 				return false, err
 			}
+			symData = vals
 		case "max_id":
-			vals, err := readValueStream(data)
+			vals, err := readValuesFromColumn(rec[2])
 			if err != nil {
 				return false, err
 			}
@@ -259,7 +269,7 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 	println("AAAAAAAAAA", spew.Sdump(symData), spew.Sdump(maxID))
 
 	// Read fragments
-	if err := readTable(TableFragments, kdfDir, func(max int, rec []string) (bool, error) {
+	if err := readTable(TableFragments, kdfDir, func(_ int, rec []string) (bool, error) {
 		if unsq(rec[0]) == "$ion_symbol_table" {
 			data, err := unsqBytes(rec[2])
 			if err != nil {
