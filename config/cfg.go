@@ -102,6 +102,7 @@ func (a *AuthorName) String() string {
 // MetaInfo keeps book meta-info overwrites from configuration.
 type MetaInfo struct {
 	ID         string        `json:"id"`
+	ASIN       string        `json:"asin"`
 	Title      string        `json:"title"`
 	Lang       string        `json:"language"`
 	Genres     []string      `json:"genres"`
@@ -295,62 +296,62 @@ var defaultConfig = []byte(`{
   }
 }`)
 
-// BuildConfig loads configuration from file.
-func BuildConfig(fname string) (*Config, error) {
+// BuildConfig loads configuration.
+func BuildConfig(fnames ...string) (*Config, error) {
 
+	var err error
+	// base configuration directory, always calculated from the path of the first configuration file
 	var base string
 
+	var configSources = []source.Source{
+		memory.NewSource(memory.WithJSON(defaultConfig)),
+	}
+
+	var wasStdin bool
+	for i, fname := range fnames {
+		switch {
+		case fname == "-":
+			// NOTE: only one configuration could be read from STDIN, the rest should be ignored
+			// Since logging is not yet setup at this point - we cannot even properly report it
+			if !wasStdin {
+				wasStdin = true
+				// stdin - json format ONLY
+				s, err := ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					return nil, fmt.Errorf("unable to read configuration from stdin: %w", err)
+				}
+				configSources = append(configSources, memory.NewSource(memory.WithJSON(s)))
+				if i == 0 {
+					if base, err = os.Getwd(); err != nil {
+						return nil, fmt.Errorf("unable to get working directory: %w", err)
+					}
+				}
+			}
+		case len(fname) > 0:
+			// from file
+			var enc encoder.Encoder
+			switch strings.ToLower(filepath.Ext(fname)) {
+			case ".yml":
+				fallthrough
+			case ".yaml":
+				enc = yaml.NewEncoder()
+			case ".toml":
+				enc = toml.NewEncoder()
+			default:
+				enc = jsonenc.NewEncoder()
+			}
+			configSources = append(configSources, file.NewSource(file.WithPath(fname), source.WithEncoder(enc)))
+			if i == 0 {
+				if base, err = filepath.Abs(filepath.Dir(fname)); err != nil {
+					return nil, fmt.Errorf("unable to get configuration directory: %w", err)
+				}
+			}
+		}
+	}
+
 	c := config.NewConfig()
-	switch {
-	case fname == "-":
-		// stdin - json format ONLY
-		source, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read configuration from stdin: %w", err)
-		}
-		err = c.Load(
-			// default values
-			memory.NewSource(memory.WithJSON(defaultConfig)),
-			// overwrite
-			memory.NewSource(memory.WithJSON(source)))
-
-		if err != nil {
-			return nil, fmt.Errorf("unable to read configuration from stdin: %w", err)
-		}
-		if base, err = os.Getwd(); err != nil {
-			return nil, fmt.Errorf("unable to get working directory: %w", err)
-		}
-	case len(fname) > 0:
-		// from file
-		var enc encoder.Encoder
-		switch strings.ToLower(filepath.Ext(fname)) {
-		case ".yml":
-			fallthrough
-		case ".yaml":
-			enc = yaml.NewEncoder()
-		case ".toml":
-			enc = toml.NewEncoder()
-		default:
-			enc = jsonenc.NewEncoder()
-		}
-		err := c.Load(
-			// default values
-			memory.NewSource(memory.WithJSON(defaultConfig)),
-			// overwrite
-			file.NewSource(file.WithPath(fname), source.WithEncoder(enc)))
-
-		if err != nil {
-			return nil, fmt.Errorf("unable to read configuration file [%s]: %w", fname, err)
-		}
-		if base, err = filepath.Abs(filepath.Dir(fname)); err != nil {
-			return nil, fmt.Errorf("unable to get configuration directory: %w", err)
-		}
-	default:
-		// default values
-		err := c.Load(memory.NewSource(memory.WithJSON(defaultConfig)))
-		if err != nil {
-			return nil, fmt.Errorf("unable to prepare default configuration: %w", err)
-		}
+	if err = c.Load(configSources...); err != nil {
+		return nil, fmt.Errorf("unable to parse configuration %v: %w", fnames, err)
 	}
 
 	conf := Config{cfg: c, Path: base, Overwrites: make(map[string]MetaInfo)}
