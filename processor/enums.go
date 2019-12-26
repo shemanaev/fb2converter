@@ -38,6 +38,7 @@ const (
 	NBlock                              // block
 	NFloat                              // float
 	NFloatOld                           // float-old
+	NFloatNew                           // float-new
 	UnsupportedNotesFmt                 //
 )
 
