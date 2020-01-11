@@ -18,13 +18,16 @@ func getAttrValue(e *etree.Element, key string) string {
 	return a.Value
 }
 
-func extractText(e *etree.Element, head bool) string {
+func extractText(e *etree.Element, head, skipLinks bool) string {
 	res := e.Text()
 	for _, c := range e.ChildElements() {
-		if utils.IsOneOfIgnoreCase(c.Tag, []string{"p", "div"}) {
-			res += "\n" + extractText(c, false)
-		} else {
-			res += extractText(c, false)
+		switch {
+		case utils.IsOneOf(c.Tag, []string{"p", "div"}):
+			res += "\n" + extractText(c, false, skipLinks)
+		case c.Tag != "a" || !skipLinks:
+			res += extractText(c, false, skipLinks)
+		default:
+			res += c.Tail()
 		}
 	}
 	res += e.Tail()
@@ -35,7 +38,7 @@ func extractText(e *etree.Element, head bool) string {
 }
 
 func getTextFragment(e *etree.Element) string {
-	return extractText(e, true)
+	return extractText(e, true, true)
 }
 
 //nolint:deadcode,unused
