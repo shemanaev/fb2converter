@@ -897,27 +897,18 @@ func (p *Processor) processBinaries() error {
 		id := getAttrValue(el, "id")
 		declaredCT := getAttrValue(el, "content-type")
 
-		s := strings.TrimSpace(el.Text())
 		// some files are badly formatted
-		s = strings.Replace(s, " ", "", -1)
-		data, err := base64.StdEncoding.DecodeString(s)
+		s := strings.Replace(el.Text(), " ", "", -1)
+		dst, src := make([]byte, base64.StdEncoding.DecodedLen(len(s))), []byte(s)
+
+		n, err := base64.StdEncoding.Decode(dst, src)
 		if err != nil {
-			// And some have several images staffed together
-			// NOTE: I know this is wrong, but short of writing my own base64 decoder this should do...
-			const errString = "illegal base64 data at input byte "
-			if strings.HasPrefix(err.Error(), errString) {
-				i, er := strconv.ParseInt(strings.TrimPrefix(err.Error(), errString), 10, 64)
-				if er != nil {
-					return fmt.Errorf("unable to decode binary (%s): %w", id, err)
-				}
-				// try to ignore everything after error position
-				data, er = base64.StdEncoding.DecodeString(s[0:i])
-				if er != nil {
-					return fmt.Errorf("unable to decode binary (%s): %w", id, err)
-				}
-			} else {
-				return fmt.Errorf("unable to decode binary (%s): %w", id, err)
+			if n == 0 {
+				p.env.Log.Warn("Unable to decode binary, ignoring", zap.String("id", id), zap.Error(err))
+				continue
 			}
+			// And some may have several images staffed together or wrong padding
+			p.env.Log.Warn("Unable to fully decode binary, recovering", zap.String("id", id), zap.Error(err))
 		}
 
 		if strings.HasSuffix(strings.ToLower(declaredCT), "svg") {
@@ -929,7 +920,7 @@ func (p *Processor) processBinaries() error {
 				fname:   fmt.Sprintf("bin%08d.svg", i),
 				relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 				imgType: "svg",
-				data:    data,
+				data:    dst,
 			})
 			continue
 		}
@@ -939,7 +930,7 @@ func (p *Processor) processBinaries() error {
 			doNotTouch bool
 		)
 
-		img, imgType, err := image.Decode(bytes.NewReader(data))
+		img, imgType, err := image.Decode(bytes.NewReader(dst))
 		if err != nil {
 			p.env.Log.Warn("Unable to decode image",
 				zap.String("id", id),
@@ -972,7 +963,7 @@ func (p *Processor) processBinaries() error {
 			relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 			img:     img,
 			imgType: imgType,
-			data:    data,
+			data:    dst,
 		}
 
 		if !doNotTouch {
@@ -1046,7 +1037,7 @@ func (p *Processor) processImages() error {
 					if p.metaOverwrite != nil && len(p.metaOverwrite.CoverImage) > 0 {
 						var (
 							err error
-							b   = &binImage{log: p.env.Log, relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages)}
+							b   = &binImage{id: b.id, log: p.env.Log, relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages)}
 						)
 						fname := p.metaOverwrite.CoverImage
 						if !filepath.IsAbs(fname) {
