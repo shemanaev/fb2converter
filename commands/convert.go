@@ -40,7 +40,7 @@ func processBook(r io.Reader, enc utils.SrcEncoding, src, dst string, nodirs, st
 	defer func(start time.Time) {
 		switch r := recover(); {
 		case r != nil:
-			env.Log.Error("Conversion ended with panic", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname), zap.ByteString("stack", debug.Stack()))
+			env.Log.Error("Conversion ended with panic", zap.Duration("elapsed", time.Since(start)), zap.Any("recover", r), zap.ByteString("stack", debug.Stack()))
 		case err != nil:
 			env.Log.Info("Conversion ended with error", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname))
 		default:

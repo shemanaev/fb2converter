@@ -129,7 +129,6 @@ endif()
 set(GENERATED_DEPS
     ${PROJECT_SOURCE_DIR}/processor/enums_string.go
     ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go
-    ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
     ${PROJECT_SOURCE_DIR}/static/files.go
 )
 
@@ -234,21 +233,17 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         DEPENDS ${PROJECT_BINARY_DIR}/stringer)
 
     add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go
-            ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
+            ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go
         DEPENDS ${PROJECT_BINARY_DIR}/stringer
-            ${PROJECT_SOURCE_DIR}/processor/enums.go ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable.go ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue.go
+            ${PROJECT_SOURCE_DIR}/processor/enums.go ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
             ${PROJECT_BINARY_DIR}/stringer -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement,CoverProcessing
-                    -output ${PROJECT_SOURCE_DIR}/processor/enums_string.go
-                    ${PROJECT_SOURCE_DIR}/processor/enums.go
+                    -output processor/enums_string.go
+                    processor/enums.go
         COMMAND GOPATH=${GO_PATH} GO111MODULE=on
             ${PROJECT_BINARY_DIR}/stringer -linecomment -type KDFTable
-                    -output ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable_enums_string.go
-                    ${PROJECT_SOURCE_DIR}/processor/kfx/sqltable.go
-        COMMAND GOPATH=${GO_PATH} GO111MODULE=on
-            ${PROJECT_BINARY_DIR}/stringer -linecomment -type valueCode
-                    -output ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue_enums_string.go
-                    ${PROJECT_SOURCE_DIR}/processor/kfx/ionvalue.go
+                    -output processor/kfx/sqltable_enums_string.go
+                    processor/kfx/sqltable.go
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Generating stringer interfaces")
 
@@ -268,12 +263,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         # -nocompress
         COMMAND GOPATH=${GO_PATH}
             ${PROJECT_BINARY_DIR}/go-bindata
-                -prefix ${PROJECT_SOURCE_DIR}/static/
+                -prefix static/
                 -ignore static/files.go
                 -ignore static/doc.go
                 -pkg static
                 -o static/files.go
-                ${PROJECT_SOURCE_DIR}/static/...
+                static/...
         # cannot do this due to the size COMMAND GOPATH=${GO_PATH} ${GO_EXECUTABLE} fmt static/files.go
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Generating Go resources for static assets")

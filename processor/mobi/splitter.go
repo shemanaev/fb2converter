@@ -1,10 +1,6 @@
 //nolint:errcheck
 package mobi
 
-// Despite obvious ineffectiveness I decided to repeat python code "ad verbum" for now, it is very time
-// consuming to debug Amazon issues and incompatibilities and old code seems to be working well.
-// Visit KindleUnpack - https://github.com/kevinhendricks/KindleUnpack for any information.
-
 import (
 	"bytes"
 	"encoding/binary"

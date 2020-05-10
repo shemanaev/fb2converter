@@ -1,38 +1,31 @@
 module github.com/rupor-github/fb2converter
 
-go 1.13
+go 1.14
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/cockroachdb/apd v1.1.0 // indirect
-	github.com/cockroachdb/apd/v2 v2.0.1
 	github.com/davecgh/go-spew v1.1.1
-	github.com/disintegration/imaging v1.6.1
+	github.com/disintegration/imaging v1.6.2
 	github.com/fogleman/gg v1.3.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.1.1
-	github.com/gosimple/slug v1.7.0
-	github.com/h2non/filetype v1.0.10
+	github.com/gosimple/slug v1.9.0
+	github.com/h2non/filetype v1.0.12
 	github.com/hidez8891/zip v1.0.0-go1.11
-	github.com/klauspost/compress v1.9.1
-	github.com/lib/pq v1.2.0 // indirect
-	github.com/maxatome/go-testdeep v1.1.2
-	github.com/micro/go-micro v1.9.1
+	github.com/klauspost/compress v1.10.5
+	github.com/micro/go-micro v1.18.0
 	github.com/neurosnap/sentences v1.0.6 // indirect
 	github.com/oklog/ulid v1.3.1
-	github.com/pkg/profile v1.3.0
-	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
+	github.com/pkg/profile v1.4.0
+	github.com/rupor-github/ion-go v0.9.1-0.20200510223042-1ae5b7a99ec9
 	github.com/shuLhan/go-bindata v3.4.0+incompatible
-	github.com/urfave/cli v1.22.2
-	go.uber.org/atomic v1.4.0 // indirect
-	go.uber.org/multierr v1.1.0 // indirect
-	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
-	golang.org/x/image v0.0.0-20190902063713-cb417be4ba39
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
-	golang.org/x/sys v0.0.0-20190904154756-749cb33beabd
+	github.com/urfave/cli v1.22.4
+	go.uber.org/zap v1.15.0
+	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+	golang.org/x/image v0.0.0-20200430140353-33d19683fad8
+	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	golang.org/x/text v0.3.2
 	golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

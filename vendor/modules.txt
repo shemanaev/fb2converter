@@ -1,33 +1,40 @@
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+# github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
+## explicit
 github.com/asaskevich/govalidator
 # github.com/bitly/go-simplejson v0.5.0
 github.com/bitly/go-simplejson
 # github.com/blang/semver v3.5.1+incompatible
+## explicit
 github.com/blang/semver
-# github.com/cockroachdb/apd/v2 v2.0.1
-github.com/cockroachdb/apd/v2
 # github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
+## explicit
 github.com/davecgh/go-spew/spew
-# github.com/disintegration/imaging v1.6.1
+# github.com/disintegration/imaging v1.6.2
+## explicit
 github.com/disintegration/imaging
 # github.com/fogleman/gg v1.3.0
+## explicit
 github.com/fogleman/gg
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
 # github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+## explicit
 github.com/golang/freetype/raster
 github.com/golang/freetype/truetype
 # github.com/google/uuid v1.1.1
+## explicit
 github.com/google/uuid
-# github.com/gosimple/slug v1.7.0
+# github.com/gosimple/slug v1.9.0
+## explicit
 github.com/gosimple/slug
-# github.com/h2non/filetype v1.0.10
+# github.com/h2non/filetype v1.0.12
+## explicit
 github.com/h2non/filetype
 github.com/h2non/filetype/matchers
 github.com/h2non/filetype/matchers/isobmff
@@ -43,26 +50,20 @@ github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/hidez8891/zip v1.0.0-go1.11
+## explicit
 github.com/hidez8891/zip
 github.com/hidez8891/zip/internal/bytes
-# github.com/imdario/mergo v0.3.7
+# github.com/imdario/mergo v0.3.8
 github.com/imdario/mergo
-# github.com/klauspost/compress v1.9.1
+# github.com/klauspost/compress v1.10.5
+## explicit
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/maxatome/go-testdeep v1.1.2
-github.com/maxatome/go-testdeep
-github.com/maxatome/go-testdeep/helpers/tdutil
-github.com/maxatome/go-testdeep/internal/ctxerr
-github.com/maxatome/go-testdeep/internal/dark
-github.com/maxatome/go-testdeep/internal/location
-github.com/maxatome/go-testdeep/internal/types
-github.com/maxatome/go-testdeep/internal/util
-github.com/maxatome/go-testdeep/internal/visited
-# github.com/micro/go-micro v1.9.1
+# github.com/micro/go-micro v1.18.0
+## explicit
 github.com/micro/go-micro/config
 github.com/micro/go-micro/config/encoder
 github.com/micro/go-micro/config/encoder/hcl
@@ -77,37 +78,47 @@ github.com/micro/go-micro/config/reader/json
 github.com/micro/go-micro/config/source
 github.com/micro/go-micro/config/source/file
 github.com/micro/go-micro/config/source/memory
+# github.com/neurosnap/sentences v1.0.6
+## explicit
 # github.com/oklog/ulid v1.3.1
+## explicit
 github.com/oklog/ulid
-# github.com/pkg/errors v0.8.1
-github.com/pkg/errors
-# github.com/pkg/profile v1.3.0
+# github.com/pkg/profile v1.4.0
+## explicit
 github.com/pkg/profile
 # github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 github.com/rainycape/unidecode
+# github.com/rupor-github/ion-go v0.9.1-0.20200510223042-1ae5b7a99ec9
+## explicit
+github.com/rupor-github/ion-go
 # github.com/russross/blackfriday/v2 v2.0.1
 github.com/russross/blackfriday/v2
 # github.com/shuLhan/go-bindata v3.4.0+incompatible
+## explicit
 github.com/shuLhan/go-bindata
 github.com/shuLhan/go-bindata/cmd/go-bindata
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/urfave/cli v1.22.2
+# github.com/urfave/cli v1.22.4
+## explicit
 github.com/urfave/cli
-# go.uber.org/atomic v1.4.0
+# go.uber.org/atomic v1.6.0
 go.uber.org/atomic
-# go.uber.org/multierr v1.1.0
+# go.uber.org/multierr v1.5.0
 go.uber.org/multierr
-# go.uber.org/zap v1.10.0
+# go.uber.org/zap v1.15.0
+## explicit
 go.uber.org/zap
 go.uber.org/zap/buffer
 go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
+# golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+## explicit
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/image v0.0.0-20190902063713-cb417be4ba39
+# golang.org/x/image v0.0.0-20200430140353-33d19683fad8
+## explicit
 golang.org/x/image/bmp
 golang.org/x/image/ccitt
 golang.org/x/image/draw
@@ -121,15 +132,18 @@ golang.org/x/image/tiff/lzw
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+# golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
+## explicit
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sys v0.0.0-20190904154756-749cb33beabd
+# golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
+## explicit
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 # golang.org/x/text v0.3.2
+## explicit
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -152,6 +166,7 @@ golang.org/x/text/language/display
 golang.org/x/text/runes
 golang.org/x/text/transform
 # golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
+## explicit
 golang.org/x/tools/cmd/stringer
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
@@ -162,10 +177,13 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/semver
 golang.org/x/tools/internal/span
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
+## explicit
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+## explicit
 gopkg.in/gomail.v2
 # gopkg.in/neurosnap/sentences.v1 v1.0.6
+## explicit
 gopkg.in/neurosnap/sentences.v1
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2

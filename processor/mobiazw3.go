@@ -26,7 +26,7 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 	}
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
@@ -89,7 +89,7 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 	}
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
@@ -160,7 +160,7 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 	}
 	args = append(args, fmt.Sprintf("-c%d", p.env.Cfg.Doc.Kindlegen.CompressionLevel))
 	args = append(args, "-locale", "en")
-	if p.env.Cfg.Doc.Kindlegen.Verbose || p.env.Debug {
+	if p.env.Cfg.Doc.Kindlegen.Verbose || len(p.env.Debug) != 0 {
 		args = append(args, "-verbose")
 	}
 	args = append(args, "-o", workFile)

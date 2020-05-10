@@ -36,7 +36,17 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	// Process global options
 
 	env := c.GlobalGeneric(state.FlagName).(*state.LocalEnv)
-	env.Debug = c.GlobalBool("debug")
+	if c.GlobalBool("debug") {
+		wd, err := os.Getwd()
+		if err != nil {
+			return cli.NewExitError(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
+		}
+		if d := c.GlobalString("debugdir"); len(d) > 0 {
+			wd = d
+		}
+		env.Debug = wd
+	}
+
 	mhl := c.GlobalInt("mhl")
 	if mhl >= config.MhlNone && mhl < config.MhlUnknown {
 		env.Mhl = mhl
@@ -137,6 +147,7 @@ func main() {
 
 		cli.StringSliceFlag{Name: "config, c", Usage: "load configuration from `FILE` (YAML, TOML or JSON). if FILE is \"-\" JSON will be expected from STDIN"},
 		cli.BoolFlag{Name: "debug, d", Usage: "leave behind various artifacts for debugging (do not delete intermediate results)"},
+		cli.StringFlag{Name: "debugdir", Usage: "`DIRECTORY` for debugging artifacts. (default: current working directory)"},
 	}
 
 	app.Commands = []cli.Command{

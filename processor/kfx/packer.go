@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/rupor-github/ion-go"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/archive"
@@ -20,8 +21,8 @@ import (
 )
 
 type parsed struct {
+	symbols      ion.SymbolTable   // $ion_symbol_table from KDF
 	translations map[uint64]string // symbols from kfxid_translation table
-	elementType  map[string]string
 }
 
 // Packer - unpacks KPF/KDF and produces single file KFX for e-Ink devices.
@@ -32,7 +33,7 @@ type Packer struct {
 
 // NewPacker returns pointer to Packer with parsed KDF.
 // fname - path to intermediate KPF file.
-func NewPacker(fname, outDir string, kpv *config.KPVEnv, log *zap.Logger) (*Packer, error) {
+func NewPacker(fname, outDir string, kpv *config.KPVEnv, debug bool, log *zap.Logger) (*Packer, error) {
 
 	kdfDir := filepath.Join(outDir, config.DirKdf)
 	if err := os.MkdirAll(kdfDir, 0700); err != nil {
@@ -42,7 +43,7 @@ func NewPacker(fname, outDir string, kpv *config.KPVEnv, log *zap.Logger) (*Pack
 	if err := unpackContainer(kpv, fname, kdfDir); err != nil {
 		return nil, err
 	}
-	book, err := parseTables(kdfDir, log /*FIX ME*/)
+	book, err := parseTables(kdfDir, debug, log)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +146,13 @@ var (
 func unsqBytes(in string) ([]byte, error) {
 
 	runeLen := utf8.RuneCountInString(in)
-	if runeLen <= 3 || !strings.HasPrefix(in, "X'") || !strings.HasSuffix(in, "'") {
+	if runeLen < 3 || !strings.HasPrefix(in, "X'") || !strings.HasSuffix(in, "'") {
 		return nil, errors.New("not a blob")
+	}
+
+	// empty blob
+	if runeLen == 3 {
+		return []byte{}, nil
 	}
 
 	runes := make([]rune, 0, runeLen)
@@ -169,11 +175,19 @@ func unsqBytes(in string) ([]byte, error) {
 	return res, nil
 }
 
-func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
+func parseTables(kdfDir string, debug bool, log *zap.Logger) (*parsed, error) {
+
+	var kdfDump *os.File
+	if debug {
+		var err error
+		if kdfDump, err = os.Create(filepath.Join(kdfDir, "kdf-dump.txt")); err != nil {
+			return nil, fmt.Errorf("unable to create kdf-dump file: %w", err)
+		}
+		defer kdfDump.Close()
+	}
 
 	p := &parsed{
 		translations: make(map[uint64]string),
-		elementType:  make(map[string]string),
 	}
 
 	// Parse KDF schema
@@ -203,12 +217,19 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		}
 	}
 
+	if kdfDump != nil {
+		kdfDump.WriteString(fmt.Sprintf("-------> %s\n%s\n\n", TableKFXID, spew.Sdump(p.translations)))
+	}
+
+	elTypes := make(map[string]string)
+
+	// Get fragment properties
 	if _, ok := tables[TableFragmentProps]; ok {
 		if err := readTable(TableFragmentProps, kdfDir, func(_ int, rec []string) (bool, error) {
 			switch unsq(rec[1]) {
 			case "child":
 			case "element_type":
-				p.elementType[unsq(rec[0])] = unsq(rec[2])
+				elTypes[unsq(rec[0])] = unsq(rec[2])
 			default:
 				log.Warn("Fragment property has unknown key", zap.Strings("rec", rec))
 			}
@@ -218,80 +239,136 @@ func parseTables(kdfDir string, log *zap.Logger) (*parsed, error) {
 		}
 	}
 
+	if kdfDump != nil {
+		kdfDump.WriteString(fmt.Sprintf("-------> %s\n%s\n\n", TableFragmentProps, spew.Sdump(elTypes)))
+	}
+
+	// See if we have actual fragments to parse
 	if _, ok := tables[TableFragments]; !ok {
 		return nil, errors.New("KPF database is missing the 'fragments' table")
 	}
 
-	readValuesFromColumn := func(field string) ([]ionValue, error) {
-		data, err := unsqBytes(field)
-		if err != nil {
-			return nil, err
-		}
-		vals, err := readValueStream(data)
-		if err != nil {
-			return nil, err
-		}
-		return vals, nil
+	// read and decode data
+	type record struct {
+		id, rtype string
+		data      []byte
 	}
 
-	// Build symbol tables
-	var maxID ionValue
-	var symData []ionValue
+	var (
+		maxIDRec       record
+		ionSymTableRec record
+		records        = make([]record, 0, 1024)
+	)
+
+	// Read fragments from database
 	if err := readTable(TableFragments, kdfDir, func(fields int, rec []string) (bool, error) {
+
 		if fields < 3 {
 			return false, fmt.Errorf("wrong number of fileds in table %s - %d", TableFragments, fields)
 		}
-		id, rtype := unsq(rec[0]), unsq(rec[1])
-		if rtype != "blob" {
-			return true, nil
-		}
-		switch id {
-		case "$ion_symbol_table":
-			vals, err := readValuesFromColumn(rec[2])
-			if err != nil {
-				return false, err
-			}
-			symData = vals
-		case "max_id":
-			vals, err := readValuesFromColumn(rec[2])
-			if err != nil {
-				return false, err
-			}
-			if len(vals) != 1 {
-				return false, fmt.Errorf("multiple max_id values in a stream (%d)", len(vals))
-			}
-			maxID = vals[0]
-		}
-		return !(maxID != nil && symData != nil), nil
-	}); err != nil {
-		return nil, err
-	}
-	println("AAAAAAAAAA", spew.Sdump(symData), spew.Sdump(maxID))
 
-	// Read fragments
-	if err := readTable(TableFragments, kdfDir, func(_ int, rec []string) (bool, error) {
-		if unsq(rec[0]) == "$ion_symbol_table" {
-			data, err := unsqBytes(rec[2])
-			if err != nil {
-				return false, err
-			}
-			log.Debug("SYMTABLE found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)), zap.String("table", string(data)))
+		r := record{
+			id:    unsq(rec[0]),
+			rtype: unsq(rec[1]),
 		}
-		if unsq(rec[0]) == "max_id" {
-			data, err := unsqBytes(rec[2])
-			if err != nil {
-				return false, err
-			}
-			log.Debug("MAX_ID found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)), zap.String("data", string(data)))
+
+		if data, err := unsqBytes(rec[2]); err != nil {
+			return false, fmt.Errorf("unable to read fragment from KDF: %w", err)
+		} else if len(data) == 0 {
+			log.Debug("Empty KDF fragment, ignoring...", zap.String("id", r.id), zap.String("type", r.rtype))
+			return true, nil
+		} else {
+			r.data = data
 		}
-		// data, err := unsqBytes(rec[2])
-		// if err != nil {
-		// 	return err
-		// }
-		// log.Debug("FRAG found", zap.String("id", unsq(rec[0])), zap.String("type", unsq(rec[1])), zap.Int("len", len(data)))
+
+		switch r.id {
+		case "$ion_symbol_table":
+			ionSymTableRec = r
+		case "max_id":
+			maxIDRec = r
+		default:
+			records = append(records, r)
+		}
 		return true, nil
 	}); err != nil {
 		return nil, err
+	}
+
+	if len(maxIDRec.id) == 0 {
+		return nil, errors.New("unable to find max_id in KDF")
+	}
+	if len(ionSymTableRec.id) == 0 {
+		return nil, errors.New("unable to find $ion_symbol_table in KDF")
+	}
+
+	cat := ion.NewCatalog(yjSymbolTable)
+	rdr := ion.NewReaderCat(bytes.NewReader(ionSymTableRec.data), cat)
+	dec := ion.NewDecoder(rdr)
+
+	// symbol table
+	val, err := dec.Decode()
+	if err != nil && !errors.Is(err, ion.ErrNoInput) {
+		return nil, fmt.Errorf("unable to decode KDF $ion_symbol_table: %w", err)
+	}
+	if val != nil {
+		return nil, fmt.Errorf("unexpected value in KDF $ion_symbold_table fragment: %+v", val)
+	}
+	// store it for later
+	p.symbols = rdr.SymbolTable()
+
+	// validate number of symbols before continuing
+	dec = ion.NewDecoder(ion.NewReader(bytes.NewReader(maxIDRec.data)))
+	val, err = dec.Decode()
+	if err != nil && !errors.Is(err, ion.ErrNoInput) {
+		return nil, fmt.Errorf("unable to decode KDF max_id: %w", err)
+	}
+	if val == nil {
+		return nil, errors.New("unexpected value in KDF max_id fragment: <nil>")
+	}
+	if maxID, ok := val.(int); !ok {
+		return nil, fmt.Errorf("max_id in KDF is not integer (%T)", val)
+	} else if uint64(maxID) != p.symbols.MaxID() {
+		return nil, fmt.Errorf("max_id in KDF fragment (%d) is is not equial to number of symbols (%d)", maxID, p.symbols.MaxID())
+	}
+
+	if kdfDump != nil {
+		kdfDump.WriteString(fmt.Sprintf("-------> %s\n$ion_symbol_table: %s, max_id: %d\n\n", TableFragments, p.symbols.String(), p.symbols.MaxID()))
+	}
+
+loop:
+	for _, rec := range records {
+		switch rec.rtype {
+		case "blob":
+			if rec.id == "max_eid_in_sections" {
+				log.Warn("unexpected max_eid_in_sections for non-dictionary, ignoring...")
+				continue loop
+			}
+			if !bytes.HasPrefix(rec.data, ionBVM) {
+				// this should never happen - let's assume this is resource
+				if kdfDump != nil {
+					kdfDump.WriteString(fmt.Sprintf("PATH rid=%s\t==>\t\"%s\"\n", rec.id, string(rec.data)))
+				}
+				continue
+			}
+			if bytes.Equal(rec.data, ionBVM) {
+				log.Debug("Empty KDF fragment (BVM only), ignoring...", zap.String("id", rec.id), zap.String("type", rec.rtype))
+				continue
+			}
+			// dec = ion.NewDecoder(ion.NewReader(bytes.NewReader(rec.data)))
+			// val, err = dec.Decode()
+			// if err != nil && !errors.Is(err, ion.ErrNoInput) {
+			// 	return nil, fmt.Errorf("unable to decode KDF fragment #%d (%s): %w", i, rec.id, err)
+			// }
+			if kdfDump != nil {
+				kdfDump.WriteString(fmt.Sprintf("BLOB rid=%s\t==>\t%s\n", rec.id, dumpToText(rec.data)))
+			}
+		case "path":
+			if kdfDump != nil {
+				kdfDump.WriteString(fmt.Sprintf("PATH rid=%s\t==>\t\"%s\"\n", rec.id, string(rec.data)))
+			}
+		default:
+			return nil, fmt.Errorf("unexpected KDF fragment type (%s) with id (%s) size %d", rec.rtype, rec.id, len(rec.data))
+		}
 	}
 	return p, nil
 }

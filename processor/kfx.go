@@ -30,7 +30,7 @@ func (p *Processor) FinalizeKFX(fname string) error {
 	}
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
@@ -52,7 +52,7 @@ func (p *Processor) FinalizeKFX(fname string) error {
 		)
 	}(start)
 
-	packer, err := kfx.NewPacker(book, outDir, p.kpvEnv, p.env.Log)
+	packer, err := kfx.NewPacker(book, outDir, p.kpvEnv, len(p.env.Debug) != 0, p.env.Log)
 	if err != nil {
 		return fmt.Errorf("unable to parse intermediate content file: %w", err)
 	}
@@ -109,10 +109,12 @@ func checkResults(outDir string, log *zap.Logger) (string, error) {
 		hdrBookName int = iota // "Book Name" - input
 		hdrETStatus            // "Enhanced Typesetting Status"
 		hdrStatus              // "Conversion Status"
-		hdrWarnings            // "Warning Count"
 		hdrErrors              // "Error Count"
+		hdrWarnings            // "Warning Count"
+		hdrInfo                // "Quality Issue Count"
 		hdrBook                // "Output File Path"
 		hdrLog                 // "Log File Path"
+		hdrReport              // "Quality Report Path"
 	)
 
 	enc, err := utils.DetectFileUTF(csvFile)
@@ -134,19 +136,18 @@ func checkResults(outDir string, log *zap.Logger) (string, error) {
 	headers := records[0]
 	record := records[1]
 
-	log.Info("KPV summary",
-		zap.String(headers[hdrETStatus], record[hdrETStatus]),
-		zap.String(headers[hdrStatus], record[hdrStatus]),
-		zap.String(headers[hdrWarnings], record[hdrWarnings]),
-		zap.String(headers[hdrErrors], record[hdrErrors]),
-		zap.String(headers[hdrBook], record[hdrBook]),
-		zap.String(headers[hdrLog], record[hdrLog]),
-	)
-	if len(record[hdrLog]) > 0 {
-		logDetails(record[hdrLog], log)
+	var fields = []zap.Field{}
+	for i := 0; i < len(headers); i++ {
+		fields = append(fields, zap.String(headers[i], record[i]))
 	}
+	log.Info("KPV summary", fields...)
 
-	// Various supercilious checks
+	// FIXME - this is version dependent, do we want it?
+	// if len(record[hdrLog]) > 0 {
+	// 	logDetails(record[hdrLog], log)
+	// }
+
+	// Various superficials checks
 	if !strings.EqualFold(record[hdrETStatus], "Supported") {
 		return "", fmt.Errorf("wrong Enhanced Typesetting Status: %s", record[hdrETStatus])
 	}

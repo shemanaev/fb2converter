@@ -134,7 +134,7 @@ func (p *Processor) writeEPUB(fname string) error {
 func (p *Processor) FinalizeEPUB(fname string) error {
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return fmt.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))

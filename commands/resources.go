@@ -44,7 +44,7 @@ func ExportResources(ctx *cli.Context) error {
 
 	if dir, err := static.AssetDir(""); err == nil {
 		for _, a := range dir {
-			if _, ignore := ignoreNames[a]; env.Debug || !ignore {
+			if _, ignore := ignoreNames[a]; len(env.Debug) != 0 || !ignore {
 				err = static.RestoreAssets(fname, a)
 				if err != nil {
 					return cli.NewExitError(errors.New(errPrefix+"unable to store resources"), errCode)

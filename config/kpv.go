@@ -104,7 +104,7 @@ func (e *KPVEnv) ExecSQL(stdin io.Reader, outDir string, arg ...string) error {
 
 var (
 	reKPVver           = regexp.MustCompile(`^Kindle\s+Previewer\s+([0-9]+\.[0-9]+\.[0-9]+)\s+Copyright\s+\(c\)\s+Amazon\.com.*$`)
-	minSupportedKPVver = semver.Version{Major: 3, Minor: 32, Patch: 0}
+	minSupportedKPVver = semver.Version{Major: 3, Minor: 38, Patch: 0}
 )
 
 // GetKPVEnv initializes KPVEnv.

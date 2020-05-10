@@ -191,17 +191,13 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 	}
 
 	// re-route temporary directory for debugging
-	if env.Debug {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get working directory: %w", err)
-		}
+	if len(env.Debug) != 0 {
 		t := time.Now()
 		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
 		if err != nil {
 			return nil, fmt.Errorf("unable to allocate ULID: %w", err)
 		}
-		p.tmpDir = filepath.Join(wd, strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
+		p.tmpDir = filepath.Join(env.Debug, strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
 			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
@@ -228,7 +224,7 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 	p.doc.Indent(etree.NoIndent)
 
 	// Save parsed document back to file (pretty-printed) for debugging
-	if p.env.Debug {
+	if len(p.env.Debug) != 0 {
 		doc := p.doc.Copy()
 		doc.IndentTabs()
 		if err := doc.WriteToFile(filepath.Join(p.tmpDir, filepath.Base(src))); err != nil {
@@ -277,21 +273,13 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 	}
 
 	// re-route temporary directory for debugging
-	if env.Debug {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get working directory: %w", err)
-		}
-		tmpd := filepath.Join(wd, "fb2c_deb")
-		if err = os.MkdirAll(tmpd, 0700); err != nil {
-			return nil, fmt.Errorf("unable to create debug directory: %w", err)
-		}
+	if len(env.Debug) != 0 {
 		t := time.Now()
 		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
 		if err != nil {
 			return nil, fmt.Errorf("unable to allocate ULID: %w", err)
 		}
-		p.tmpDir = filepath.Join(tmpd, ulid.String()+"_"+filepath.Base(src))
+		p.tmpDir = filepath.Join(env.Debug, strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
 			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
@@ -327,7 +315,7 @@ func (p *Processor) Process() error {
 
 	// Debugging
 	defer func() {
-		if p.env.Debug && p.kind == InFb2 {
+		if len(p.env.Debug) != 0 && p.kind == InFb2 {
 			// Dump processed book for debugging
 			bname := filepath.Base(p.src)
 			dump, err := os.Create(filepath.Join(p.tmpDir, strings.TrimSuffix(bname, filepath.Ext(p.src))+"-dump.zst"))
@@ -494,7 +482,7 @@ func (p *Processor) SendToKindle(fname string) error {
 
 // Clean removes temporary files left after processing.
 func (p *Processor) Clean() error {
-	if p.env.Debug {
+	if len(p.env.Debug) != 0 {
 		// Leave temporary files intact
 		return nil
 	}
