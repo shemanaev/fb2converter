@@ -69,9 +69,14 @@ func (e *KPVEnv) ExecSQL(stdin io.Reader, outDir string, arg ...string) error {
 	}
 
 	// read and print kindlegen stdout
+	var warnings bool
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {
-		e.log.Debug("sqlite", zap.String("stderr", scanner.Text()))
+		txt := scanner.Text()
+		if strings.Index(txt, "no such table:") == -1 {
+			warnings = true
+			e.log.Debug("sqlite", zap.String("stderr", txt))
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("sqlite stderr pipe broken: %w", err)
@@ -88,7 +93,9 @@ func (e *KPVEnv) ExecSQL(stdin io.Reader, outDir string, arg ...string) error {
 				// success
 			case 1:
 				// warnings
-				e.log.Warn("sqlite has some warnings, see log for details")
+				if warnings {
+					e.log.Warn("sqlite has warnings, see debug log for details")
+				}
 			case 2:
 				// error - unable to dump KDF
 				fallthrough
