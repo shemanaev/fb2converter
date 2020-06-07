@@ -3,6 +3,7 @@ module github.com/rupor-github/fb2converter
 go 1.14
 
 require (
+	github.com/amzn/ion-go v0.0.0-20200605231119-e3d4ecd1abfc
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/davecgh/go-spew v1.1.1
@@ -18,7 +19,6 @@ require (
 	github.com/neurosnap/sentences v1.0.6 // indirect
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/profile v1.4.0
-	github.com/rupor-github/ion-go v0.9.1-0.20200510223042-1ae5b7a99ec9
 	github.com/shuLhan/go-bindata v3.4.0+incompatible
 	github.com/urfave/cli v1.22.4
 	go.uber.org/zap v1.15.0

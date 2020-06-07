@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amzn/ion-go/ion"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/rupor-github/ion-go"
 )
 
 var ionBVM = []byte{0xE0, 1, 0, 0xEA} // binary version marker

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/rupor-github/ion-go"
+	"github.com/amzn/ion-go/ion"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/archive"
