@@ -17,7 +17,7 @@ func DumpConfig(ctx *cli.Context) error {
 	var err error
 
 	const (
-		errPrefix = "\n*** ERROR ***\n\ndumpconfig: "
+		errPrefix = "dumpconfig: "
 		errCode   = 1
 	)
 

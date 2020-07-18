@@ -21,7 +21,7 @@ func SyncCovers(ctx *cli.Context) error {
 	// var err error
 
 	const (
-		errPrefix = "\n*** ERROR ***\n\nsynccovers: "
+		errPrefix = "synccovers: "
 		errCode   = 1
 	)
 

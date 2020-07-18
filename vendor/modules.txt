@@ -100,7 +100,10 @@ github.com/shuLhan/go-bindata/cmd/go-bindata
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
 # github.com/urfave/cli v1.22.4
+<<<<<<< HEAD
 ## explicit
+=======
+>>>>>>> master
 github.com/urfave/cli
 # go.uber.org/atomic v1.6.0
 go.uber.org/atomic

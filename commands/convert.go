@@ -102,6 +102,8 @@ func processDir(dir string, format processor.OutputFmt, nodirs, stk, overwrite b
 						env.Log.Error("Unable to process file", zap.String("file", path), zap.Error(err))
 					}
 				}
+			} else {
+				env.Log.Debug("Skipping file, not recognized as book or archive", zap.String("file", path))
 			}
 		}
 		return nil
@@ -152,6 +154,8 @@ func processArchive(path, pathIn, pathOut string, format processor.OutputFmt, no
 						zap.Error(err))
 				}
 			}
+		} else {
+			env.Log.Debug("Skipping file, not recognized as book", zap.String("archive", archive), zap.String("file", f.FileHeader.Name))
 		}
 		return nil
 	})
@@ -162,7 +166,7 @@ func processArchive(path, pathIn, pathOut string, format processor.OutputFmt, no
 func Convert(ctx *cli.Context) (err error) {
 
 	const (
-		errPrefix = "\n*** ERROR ***\n\nconvert: "
+		errPrefix = "convert: "
 		errCode   = 1
 	)
 
