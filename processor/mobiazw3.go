@@ -167,7 +167,6 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 
 	cmd := exec.Command(p.kindlegenPath, args...)
 
-	start := time.Now()
 	p.env.Log.Debug("kindlegen is staring")
 	defer func(start time.Time) {
 		p.env.Log.Debug("kindlegen is done",
@@ -175,7 +174,7 @@ func (p *Processor) generateIntermediateMobiContent(fname string) (string, error
 			zap.String("path", cmd.Path),
 			zap.Strings("args", args),
 		)
-	}(start)
+	}(time.Now())
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {

@@ -35,7 +35,6 @@ func processBook(r io.Reader, enc utils.SrcEncoding, src, dst string, nodirs, st
 		p     *processor.Processor
 	)
 
-	start := time.Now()
 	env.Log.Info("Conversion starting", zap.String("from", src))
 	defer func(start time.Time) {
 		switch r := recover(); {
@@ -46,7 +45,7 @@ func processBook(r io.Reader, enc utils.SrcEncoding, src, dst string, nodirs, st
 		default:
 			env.Log.Info("Conversion completed", zap.Duration("elapsed", time.Since(start)), zap.String("to", fname))
 		}
-	}(start)
+	}(time.Now())
 
 	p, err = processor.NewFB2(utils.SelectReader(r, enc), enc == utils.EncUnknown, src, dst, nodirs, stk, overwrite, format, env)
 	if err != nil {
@@ -243,11 +242,10 @@ func Convert(ctx *cli.Context) (err error) {
 		stk = false
 	}
 
-	start := time.Now()
 	env.Log.Info("Processing starting", zap.String("source", src), zap.String("destination", dst), zap.Stringer("format", format))
 	defer func(start time.Time) {
 		env.Log.Info("Processing completed", zap.Duration("elapsed", time.Since(start)))
-	}(start)
+	}(time.Now())
 
 	var head, tail string
 	for head = src; len(head) != 0; head, tail = filepath.Split(head) {

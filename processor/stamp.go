@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
@@ -20,6 +21,13 @@ func (p *Processor) stampCover(im image.Image) (image.Image, error) {
 		// just in case
 		return nil, nil
 	}
+
+	p.env.Log.Debug("Stamping cover - start")
+	defer func(start time.Time) {
+		p.env.Log.Debug("Stamping cover - done",
+			zap.Duration("elapsed", time.Since(start)),
+		)
+	}(time.Now())
 
 	titles := make([]string, 0, 3)
 
