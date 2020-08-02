@@ -383,7 +383,7 @@ func (p *Processor) Process() error {
 // Save makes the conversion results permanent by storing everything properly and cleaning temporary artifacts.
 func (p *Processor) Save() (string, error) {
 
-	p.env.Log.Debug("Saving content - starting", zap.String("tmp", p.tmpDir), zap.String("content", DirContent))
+	p.env.Log.Debug("Saving content - starting", zap.String("tmp", p.tmpDir), zap.String("content", config.DirContent))
 	defer func(start time.Time) {
 		p.env.Log.Debug("Saving content - done", zap.Duration("elapsed", time.Since(start)))
 	}(time.Now())

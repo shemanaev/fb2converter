@@ -10,6 +10,7 @@ import (
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
+	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/static"
