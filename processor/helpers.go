@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/static"
 )
 
@@ -38,7 +39,7 @@ func (p *Processor) getStylesheet() (*dataFile, error) {
 			return nil, errors.Wrap(err, "unable to read stylesheet")
 		}
 	} else {
-		if dir, err := static.AssetDir(DirProfile); err == nil {
+		if dir, err := static.AssetDir(config.DirProfile); err == nil {
 			name := fmt.Sprintf("default.%s.css", p.format.String())
 			for _, a := range dir {
 				if a == name {
@@ -50,12 +51,12 @@ func (p *Processor) getStylesheet() (*dataFile, error) {
 		if len(fname) == 0 {
 			fname = "default.css"
 		}
-		if d.data, err = static.Asset(path.Join(DirProfile, fname)); err != nil {
+		if d.data, err = static.Asset(path.Join(config.DirProfile, fname)); err != nil {
 			return nil, errors.Wrap(err, "unable to get default stylesheet")
 		}
 	}
 	d.fname = "stylesheet.css"
-	d.relpath = DirContent
+	d.relpath = filepath.Join(config.DirEpub, config.DirContent)
 	p.Book.Data = append(p.Book.Data, d)
 	return d, nil
 }
@@ -67,7 +68,7 @@ func (p *Processor) getDefaultCover(i int) (*binImage, error) {
 		err error
 		b   = &binImage{
 			log:     p.env.Log,
-			relpath: filepath.Join(DirContent, DirImages),
+			relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 		}
 	)
 
@@ -109,11 +110,11 @@ func (p *Processor) getNotFoundImage(i int) (*binImage, error) {
 		err error
 		b   = &binImage{
 			log:     p.env.Log,
-			relpath: filepath.Join(DirContent, DirImages),
+			relpath: filepath.Join(config.DirEpub, config.DirContent, config.DirImages),
 		}
 	)
 
-	if b.data, err = static.Asset(path.Join(DirResources, "not_found.png")); err != nil {
+	if b.data, err = static.Asset(path.Join(config.DirResources, "not_found.png")); err != nil {
 		return nil, errors.Wrap(err, "unable to get image not_found.png")
 	}
 	b.fname = fmt.Sprintf("bin%08d.png", i)
@@ -201,7 +202,7 @@ func (p *Processor) getVignetteFile(level, vignette string) string {
 
 	b.id = fname
 	b.fname = filepath.Base(fname)
-	b.relpath = filepath.Join(DirContent, DirVignettes)
+	b.relpath = filepath.Join(config.DirEpub, config.DirContent, config.DirVignettes)
 	b.ct = mime.TypeByExtension(filepath.Ext(fname))
 	p.Book.Vignettes = append(p.Book.Vignettes, b)
 

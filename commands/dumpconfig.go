@@ -36,7 +36,7 @@ func DumpConfig(ctx *cli.Context) error {
 	}
 
 	var data []byte
-	if env.Debug {
+	if len(env.Debug) != 0 {
 		data, err = env.Cfg.GetBytes()
 	} else {
 		data, err = env.Cfg.GetActualBytes()

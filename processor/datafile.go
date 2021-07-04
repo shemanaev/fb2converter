@@ -33,9 +33,7 @@ func (f *dataFile) String() string {
 	if f == nil {
 		return "<<empty>>"
 	}
-	return fmt.Sprintf("<<id: %s, fname: %s, relpath: %s, ct: %s>>",
-		f.id, f.fname, f.relpath, f.ct,
-	)
+	return fmt.Sprintf("<<id: %s, fname: %s, relpath: %s, ct: %s>>", f.id, f.fname, f.relpath, f.ct)
 }
 
 func (f *dataFile) flush(path string) error {
@@ -63,7 +61,7 @@ func (f *dataFile) flush(path string) error {
 		return nil
 	}
 
-	if err := os.WriteFile(filepath.Join(newdir, f.fname), f.data, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(newdir, f.fname), f.data, 0600); err != nil {
 		return errors.Wrapf(err, "unable to save data to (%s)", filepath.Join(newdir, f.fname))
 	}
 	return nil

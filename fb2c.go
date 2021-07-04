@@ -38,7 +38,17 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	// Process global options
 
 	env := c.GlobalGeneric(state.FlagName).(*state.LocalEnv)
-	env.Debug = c.GlobalBool("debug")
+	if c.GlobalBool("debug") {
+		wd, err := os.Getwd()
+		if err != nil {
+			return cli.NewExitError(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
+		}
+		if d := c.GlobalString("debugdir"); len(d) > 0 {
+			wd = d
+		}
+		env.Debug = wd
+	}
+
 	mhl := c.GlobalInt("mhl")
 	if mhl >= config.MhlNone && mhl < config.MhlUnknown {
 		env.Mhl = mhl
@@ -181,7 +191,7 @@ func main() {
 			Before: wrap.beforeCommandRun,
 			After:  wrap.afterCommandRun,
 			Flags: []cli.Flag{
-				cli.StringFlag{Name: "to", Value: "epub", Usage: "conversion output `TYPE` (supported types: epub, kepub, azw3, mobi)"},
+				cli.StringFlag{Name: "to", Value: "epub", Usage: "conversion output `TYPE` (supported types: epub, kepub, azw3, mobi, kfx)"},
 				cli.BoolFlag{Name: "nodirs", Usage: "when producing output do not keep input directory structure"},
 				cli.BoolFlag{Name: "stk", Usage: "send converted file to kindle (mobi only)"},
 				cli.BoolFlag{Name: "ow", Usage: "continue even if destination exits, overwrite files"},

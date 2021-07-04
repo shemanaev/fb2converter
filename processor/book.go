@@ -1,13 +1,11 @@
 package processor
 
 import (
-	"io"
 	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"golang.org/x/text/language"
 
@@ -85,15 +83,6 @@ func NewBook(u uuid.UUID, name string) *Book {
 		NoteBodyTitles: make(map[string]*note),
 		Notes:          make(map[string]*note),
 		context:        newContext(),
-	}
-}
-
-// Dump outputs internal state for debugging.
-func (b *Book) Dump(out io.Writer) {
-	if out != nil {
-		dumper := spew.NewDefaultConfig()
-		dumper.MaxDepth = 5
-		dumper.Fdump(out, *b)
 	}
 }
 

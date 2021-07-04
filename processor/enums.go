@@ -13,6 +13,7 @@ const (
 	OKepub                                // kepub
 	OAzw3                                 // azw3
 	OMobi                                 // mobi
+	OKfx                                  // kfx
 	UnsupportedOutputFmt                  //
 )
 
@@ -25,6 +26,16 @@ func ParseFmtString(format string) OutputFmt {
 		}
 	}
 	return UnsupportedOutputFmt
+}
+
+// Kindle returns true if format is one of the Kindle specific formats.
+func (f OutputFmt) Kindle() bool {
+	return f == OAzw3 || f == OMobi || f == OKfx
+}
+
+// Unsupported returns true is format is unknown.
+func (f OutputFmt) Unsupported() bool {
+	return f < 0 || f >= UnsupportedOutputFmt
 }
 
 // NotesFmt specification of requested notes presentation.

@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
-	"github.com/rupor-github/fb2converter/processor"
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/state"
 	"github.com/rupor-github/fb2converter/static"
 )
@@ -37,14 +37,14 @@ func ExportResources(ctx *cli.Context) error {
 	}
 
 	ignoreNames := map[string]bool{
-		processor.DirHyphenator: true,
-		processor.DirResources:  true,
-		processor.DirSentences:  true,
+		config.DirHyphenator: true,
+		config.DirResources:  true,
+		config.DirSentences:  true,
 	}
 
 	if dir, err := static.AssetDir(""); err == nil {
 		for _, a := range dir {
-			if _, ignore := ignoreNames[a]; env.Debug || !ignore {
+			if _, ignore := ignoreNames[a]; len(env.Debug) != 0 || !ignore {
 				err = static.RestoreAssets(fname, a)
 				if err != nil {
 					return cli.NewExitError(errors.New(errPrefix+"unable to store resources"), errCode)

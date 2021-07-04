@@ -10,6 +10,7 @@ import (
 	"golang.org/x/text/language/display"
 	"gopkg.in/neurosnap/sentences.v1"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/static"
 )
 
@@ -51,7 +52,7 @@ func newTokenizer(lang language.Tag, log *zap.Logger) *tokenizer {
 		if len(name) == 0 {
 			continue
 		}
-		dpat, err = static.Asset(path.Join(DirSentences, fmt.Sprintf("%s.json", name)))
+		dpat, err = static.Asset(path.Join(config.DirSentences, fmt.Sprintf("%s.json", name)))
 		if err != nil {
 			prev = name
 			continue
@@ -62,7 +63,7 @@ func newTokenizer(lang language.Tag, log *zap.Logger) *tokenizer {
 
 	if len(lname) == 0 {
 		log.Warn("Unable to find suitable sentences tokenizer data, using english", zap.Stringer("language", lang))
-		dpat, err = static.Asset(path.Join(DirSentences, "english.json"))
+		dpat, err = static.Asset(path.Join(config.DirSentences, "english.json"))
 		if err != nil {
 			log.Warn("Unable to find english sentences tokenizer data, turning off sentences segmentation", zap.Error(err))
 			return nil

@@ -4,17 +4,11 @@ project(fb2converter NONE)
 
 message(STATUS "Running cmake version ${CMAKE_VERSION}")
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "default to release build type" FORCE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "default to release build type" FORCE)
 endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Generator: ${CMAKE_GENERATOR}")
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "********************************************************************************")
-    message(STATUS "*** Do not forget to do \"make deps_vendor\" before switching to Release mode! ***")
-    message(STATUS "********************************************************************************")
-endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -135,8 +129,8 @@ add_custom_target(release
     COMMENT "Building release..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
-set(FB2C_TARGET "${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/fb2c${CMAKE_EXECUTABLE_SUFFIX}")
-set(KINDLEGEN_TARGET "${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/kindlegen${CMAKE_EXECUTABLE_SUFFIX}")
+set(FB2C_TARGET ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/fb2c${CMAKE_EXECUTABLE_SUFFIX})
+set(KINDLEGEN_TARGET ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/kindlegen${CMAKE_EXECUTABLE_SUFFIX})
 list(APPEND ZIP_DEPS ${PROJECT_BINARY_DIR}/changelog.txt ${FB2C_TARGET} ${KINDLEGEN_TARGET})
 if(CROSS_GOOS STREQUAL "windows")
     # myhomelib suppport
@@ -154,13 +148,12 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/fb2c_${MSYSTEM_NAME}.zip
     COMMENT "Archiving release..."
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 
-# shortcut
-add_custom_target(bin_fb2c ALL DEPENDS ${FB2C_TARGET} ${KINDLEGEN_TARGET} WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-add_custom_command(OUTPUT ${FB2C_TARGET}
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+add_custom_target(bin_fb2c ALL
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} 
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET}
+    BYPRODUCTS ${FB2C_TARGET}
     COMMENT "Building fb2c..."
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 if(CROSS_GOOS STREQUAL "windows")
     # myhomelib suppport
@@ -244,13 +237,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Running linters on main target
     find_program(GO_LINTER golangci-lint PATHS ${PROJECT_BINARY_DIR} NO_DEFAULT_PATH)
     if(NOT GO_LINTER)
-        set(golangci-lint-ver "1.33.0")
+        set(golangci-lint-ver "1.41.1")
         message(STATUS "Preparing golangci-lint ${golangci-lint-ver}")
         file(DOWNLOAD "https://github.com/golangci/golangci-lint/releases/download/v${golangci-lint-ver}/golangci-lint-${golangci-lint-ver}-linux-amd64.tar.gz" ${PROJECT_BINARY_DIR}/golangci-lint.tar.gz
             INACTIVITY_TIMEOUT 60
             TIMEOUT 300
             STATUS DOWNLOAD_RES
-            EXPECTED_HASH SHA256=e2d6082f1df53c5d2c280765000f9e82783ea909ba419c6c4e172936b076031e)
+            EXPECTED_HASH SHA256=23e1078ab00a750afcde7e7eb5aab8e908ef18bee5486eeaa2d52ee57d178580)
         list(GET DOWNLOAD_RES 0 RES)
         list(GET DOWNLOAD_RES 1 MSG)
         if(RES)

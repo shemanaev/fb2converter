@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/processor/internal/mobi"
 )
 
@@ -26,7 +27,7 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 	}
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return errors.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
@@ -80,7 +81,7 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 	}
 
 	if _, err := os.Stat(fname); err == nil {
-		if !p.env.Debug && !p.overwrite {
+		if len(p.env.Debug) == 0 && !p.overwrite {
 			return errors.Errorf("output file already exists: %s", fname)
 		}
 		p.env.Log.Warn("Overwriting existing file", zap.String("file", fname))
@@ -128,7 +129,7 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 // generateIntermediateContent produces temporary mobi file, presently by running kindlegen and returns its full path.
 func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 
-	workDir := filepath.Join(p.tmpDir, DirContent)
+	workDir := filepath.Join(p.tmpDir, config.DirEpub, config.DirContent)
 	if p.kind == InEpub {
 		workDir = p.tmpDir
 	}
@@ -142,7 +143,7 @@ func (p *Processor) generateIntermediateContent(fname string) (string, error) {
 	}
 	args = append(args, fmt.Sprintf("-c%d", p.env.Cfg.Doc.Kindlegen.CompressionLevel))
 	args = append(args, "-locale", "en")
-	if p.env.Cfg.Doc.Kindlegen.Verbose || p.env.Debug {
+	if p.env.Cfg.Doc.Kindlegen.Verbose || len(p.env.Debug) != 0 {
 		args = append(args, "-verbose")
 	}
 	args = append(args, "-o", workFile)

@@ -187,19 +187,19 @@ func Convert(ctx *cli.Context) (err error) {
 	switch env.Mhl {
 	case config.MhlMobi:
 		format = processor.ParseFmtString(env.Cfg.Fb2Mobi.OutputFormat)
-		if format == processor.UnsupportedOutputFmt || format == processor.OEpub || format == processor.OKepub {
+		if format.Unsupported() || !format.Kindle() {
 			env.Log.Warn("Unknown output format in MHL mode requested, switching to mobi", zap.String("format", env.Cfg.Fb2Mobi.OutputFormat))
 			format = processor.OMobi
 		}
 	case config.MhlEpub:
 		format = processor.ParseFmtString(env.Cfg.Fb2Epub.OutputFormat)
-		if format == processor.UnsupportedOutputFmt || format == processor.OMobi || format == processor.OAzw3 {
+		if format.Unsupported() || format.Kindle() {
 			env.Log.Warn("Unknown output format in MHL mode requested, switching to epub", zap.String("format", env.Cfg.Fb2Epub.OutputFormat))
 			format = processor.OEpub
 		}
 	default:
 		format = processor.ParseFmtString(ctx.String("to"))
-		if format == processor.UnsupportedOutputFmt {
+		if format.Unsupported() {
 			env.Log.Warn("Unknown output format requested, switching to epub", zap.String("format", ctx.String("to")))
 			format = processor.OEpub
 		}

@@ -74,7 +74,7 @@ func Transfer(ctx *cli.Context) (err error) {
 	}
 
 	format := processor.ParseFmtString(ctx.String("to"))
-	if format == processor.UnsupportedOutputFmt || (format != processor.OMobi && format != processor.OAzw3) {
+	if format.Unsupported() || !format.Kindle() {
 		env.Log.Warn("Unknown output format requested, switching to mobi", zap.String("format", ctx.String("to")))
 		format = processor.OMobi
 	}

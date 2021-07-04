@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/static"
 )
 
@@ -68,7 +69,7 @@ func (p *Processor) stampCover(im image.Image) (image.Image, error) {
 			return nil, err
 		}
 	} else {
-		data, err := static.Asset(path.Join(DirResources, "LinLibertine_RBah.ttf"))
+		data, err := static.Asset(path.Join(config.DirResources, "LinLibertine_RBah.ttf"))
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get default stamp font")
 		}

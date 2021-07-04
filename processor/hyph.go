@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 
+	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/hyphenator"
 	"github.com/rupor-github/fb2converter/static"
 )
@@ -81,7 +82,7 @@ func newHyph(lang language.Tag, log *zap.Logger) *hyph {
 		if len(name) == 0 {
 			continue
 		}
-		dpat, err = static.Asset(path.Join(DirHyphenator, fmt.Sprintf("hyph-%s.pat.txt", name)))
+		dpat, err = static.Asset(path.Join(config.DirHyphenator, fmt.Sprintf("hyph-%s.pat.txt", name)))
 		if err != nil {
 			prev = name
 			continue
@@ -95,7 +96,7 @@ func newHyph(lang language.Tag, log *zap.Logger) *hyph {
 		return nil
 	}
 
-	dexc, err := static.Asset(path.Join(DirHyphenator, fmt.Sprintf("hyph-%s.hyp.txt", lname)))
+	dexc, err := static.Asset(path.Join(config.DirHyphenator, fmt.Sprintf("hyph-%s.hyp.txt", lname)))
 	if err != nil {
 		log.Warn("Unable to find suitable exceptions dictionary, leaving empty", zap.Stringer("language", lang))
 	}
