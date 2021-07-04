@@ -4,7 +4,8 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	goerr "errors"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,7 +20,6 @@ import (
 	"github.com/micro/go-micro/config/source"
 	"github.com/micro/go-micro/config/source/file"
 	"github.com/micro/go-micro/config/source/memory"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
@@ -317,12 +317,12 @@ func BuildConfig(fnames ...string) (*Config, error) {
 				// stdin - json format ONLY
 				s, err := io.ReadAll(os.Stdin)
 				if err != nil {
-					return nil, errors.Wrap(err, "unable to read configuration from stdin")
+					return nil, fmt.Errorf("unable to read configuration from stdin: %w", err)
 				}
 				configSources = append(configSources, memory.NewSource(memory.WithJSON(s)))
 				if i == 0 {
 					if base, err = os.Getwd(); err != nil {
-						return nil, errors.Wrap(err, "unable to get working directory")
+						return nil, fmt.Errorf("unable to get working directory: %w", err)
 					}
 				}
 			}
@@ -342,7 +342,7 @@ func BuildConfig(fnames ...string) (*Config, error) {
 			configSources = append(configSources, file.NewSource(file.WithPath(fname), source.WithEncoder(enc)))
 			if i == 0 {
 				if base, err = filepath.Abs(filepath.Dir(fname)); err != nil {
-					return nil, errors.Wrap(err, "unable to get configuration directory")
+					return nil, fmt.Errorf("unable to get configuration directory: %w", err)
 				}
 			}
 		}
@@ -350,32 +350,32 @@ func BuildConfig(fnames ...string) (*Config, error) {
 
 	c := config.NewConfig()
 	if err = c.Load(configSources...); err != nil {
-		return nil, errors.Wrapf(err, "unable to parse configuration %v", fnames)
+		return nil, fmt.Errorf("unable to parse configuration %v: %w", fnames, err)
 	}
 
 	conf := Config{cfg: c, Path: base, Overwrites: make(map[string]MetaInfo)}
 	if err := c.Get("logger", "console").Scan(&conf.ConsoleLogger); err != nil {
-		return nil, errors.Wrap(err, "unable to read console logger configuration")
+		return nil, fmt.Errorf("unable to read console logger configuration: %w", err)
 	}
 	if err := c.Get("logger", "file").Scan(&conf.FileLogger); err != nil {
-		return nil, errors.Wrap(err, "unable to read file logger configuration")
+		return nil, fmt.Errorf("unable to read file logger configuration: %w", err)
 	}
 	if err := c.Get("document").Scan(&conf.Doc); err != nil {
-		return nil, errors.Wrap(err, "unable to read document format configuration")
+		return nil, fmt.Errorf("unable to read document format configuration: %w", err)
 	}
 	if err := c.Get("fb2mobi").Scan(&conf.Fb2Mobi); err != nil {
-		return nil, errors.Wrap(err, "unable to read fb2mobi cnfiguration")
+		return nil, fmt.Errorf("unable to read fb2mobi cnfiguration: %w", err)
 	}
 	if err := c.Get("fb2epub").Scan(&conf.Fb2Epub); err != nil {
-		return nil, errors.Wrap(err, "unable to read fb2epub cnfiguration")
+		return nil, fmt.Errorf("unable to read fb2epub cnfiguration: %w", err)
 	}
 	if err := c.Get("sendtokindle").Scan(&conf.SMTPConfig); err != nil {
-		return nil, errors.Wrap(err, "unable to read send to kindle cnfiguration")
+		return nil, fmt.Errorf("unable to read send to kindle cnfiguration: %w", err)
 	}
 
 	var metas []confMetaOverwrite
 	if err := c.Get("overwrites").Scan(&metas); err != nil {
-		return nil, errors.Wrap(err, "unable to read meta information overwrites")
+		return nil, fmt.Errorf("unable to read meta information overwrites: %w", err)
 	}
 	for _, meta := range metas {
 		name := filepath.ToSlash(meta.Name)
@@ -469,10 +469,10 @@ func (conf *Config) GetKindlegenPath() (string, error) {
 	fname := conf.Doc.Kindlegen.Path
 	expath, err := os.Executable()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to detect program path")
+		return "", fmt.Errorf("unable to detect program path: %w", err)
 	}
 	if expath, err = filepath.Abs(filepath.Dir(expath)); err != nil {
-		return "", errors.Wrap(err, "unable to calculate program path")
+		return "", fmt.Errorf("unable to calculate program path: %w", err)
 	}
 
 	if len(fname) > 0 {
@@ -483,7 +483,7 @@ func (conf *Config) GetKindlegenPath() (string, error) {
 		fname = filepath.Join(expath, kindlegen())
 	}
 	if _, err = os.Stat(fname); err != nil {
-		return "", errors.Wrap(err, "unable to find kindlegen")
+		return "", fmt.Errorf("unable to find kindlegen: %w", err)
 	}
 	return fname, nil
 }
@@ -615,7 +615,7 @@ func (conf *Config) PrepareLog() (*zap.Logger, error) {
 		if f, err := opener(conf.FileLogger.Destination, conf.FileLogger.Mode); err == nil {
 			fileCore = zapcore.NewCore(fileEncoder, zapcore.Lock(f), logLevel)
 		} else {
-			return nil, errors.Wrapf(err, "unable to access file log destination (%s)", conf.FileLogger.Destination)
+			return nil, fmt.Errorf("unable to access file log destination (%s): %w", conf.FileLogger.Destination, err)
 		}
 	} else {
 		fileCore = zapcore.NewNopCore()
@@ -643,7 +643,7 @@ func (c consoleEnc) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buf
 	for _, f := range fields {
 		if f.Type == zapcore.ErrorType {
 			e := f.Interface.(error)
-			f.Interface = goerr.New(e.Error())
+			f.Interface = errors.New(e.Error())
 		}
 		newFields = append(newFields, f)
 	}

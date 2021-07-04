@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/rupor-github/fb2converter/etree"
 )
 
@@ -44,7 +42,7 @@ func (f *dataFile) flush(path string) error {
 
 	newdir := filepath.Join(path, f.relpath)
 	if err := os.MkdirAll(newdir, 0700); err != nil {
-		return errors.Wrap(err, "unable to create content directory")
+		return fmt.Errorf("unable to create content directory: %w", err)
 	}
 
 	if f.doc != nil {
@@ -56,13 +54,13 @@ func (f *dataFile) flush(path string) error {
 			f.doc.IndentTabs()
 		}
 		if err := f.doc.WriteToFile(filepath.Join(newdir, f.fname)); err != nil {
-			return errors.Wrapf(err, "unable to flush XML content to %s", filepath.Join(newdir, f.fname))
+			return fmt.Errorf("unable to flush XML content to %s: %w", filepath.Join(newdir, f.fname), err)
 		}
 		return nil
 	}
 
 	if err := os.WriteFile(filepath.Join(newdir, f.fname), f.data, 0600); err != nil {
-		return errors.Wrapf(err, "unable to save data to (%s)", filepath.Join(newdir, f.fname))
+		return fmt.Errorf("unable to save data to (%s): %w", filepath.Join(newdir, f.fname), err)
 	}
 	return nil
 }

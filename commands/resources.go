@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
 	"github.com/rupor-github/fb2converter/config"

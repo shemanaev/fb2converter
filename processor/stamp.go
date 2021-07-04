@@ -10,7 +10,6 @@ import (
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
@@ -71,11 +70,11 @@ func (p *Processor) stampCover(im image.Image) (image.Image, error) {
 	} else {
 		data, err := static.Asset(path.Join(config.DirResources, "LinLibertine_RBah.ttf"))
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get default stamp font")
+			return nil, fmt.Errorf("unable to get default stamp font: %w", err)
 		}
 		f, err := truetype.Parse(data)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse default stamp font")
+			return nil, fmt.Errorf("unable to parse default stamp font: %w", err)
 		}
 		face := truetype.NewFace(f, &truetype.Options{
 			Size: fh,

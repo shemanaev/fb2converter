@@ -3,6 +3,8 @@ package commands
 
 import (
 	"archive/zip"
+	"errors"
+	"fmt"
 	"io"
 	"math"
 	"os"
@@ -11,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 	"golang.org/x/text/encoding"
@@ -169,17 +170,17 @@ func Convert(ctx *cli.Context) (err error) {
 	}
 	src, err = filepath.Abs(src)
 	if err != nil {
-		return cli.NewExitError(errors.Wrapf(err, "%scleaning source path failed", errPrefix), errCode)
+		return cli.NewExitError(fmt.Errorf("%scleaning source path failed: %w", errPrefix, err), errCode)
 	}
 
 	dst := ctx.Args().Get(1)
 	if len(dst) == 0 {
 		if dst, err = os.Getwd(); err != nil {
-			return cli.NewExitError(errors.Wrapf(err, "%sunable to get working directory", errPrefix), errCode)
+			return cli.NewExitError(fmt.Errorf("%sunable to get working directory: %w", errPrefix, err), errCode)
 		}
 	} else {
 		if dst, err = filepath.Abs(dst); err != nil {
-			return cli.NewExitError(errors.Wrapf(err, "%scleaning destination path failed", errPrefix), errCode)
+			return cli.NewExitError(fmt.Errorf("%scleaning destination path failed: %w", errPrefix, err), errCode)
 		}
 	}
 
@@ -254,11 +255,11 @@ func Convert(ctx *cli.Context) (err error) {
 			if len(tail) != 0 {
 				// directory cannot have tail - it would be simple file
 				return cli.NewExitError(
-					errors.Errorf("%sinput source was not found (%s) => (%s)", errPrefix, head, strings.TrimPrefix(src, head)),
+					fmt.Errorf("%sinput source was not found (%s) => (%s)", errPrefix, head, strings.TrimPrefix(src, head)),
 					errCode)
 			}
 			if err := processDir(head, format, nodirs, stk, overwrite, cpage, dst, env); err != nil {
-				return cli.NewExitError(errors.Wrapf(err, "%sunable to process directory", errPrefix), errCode)
+				return cli.NewExitError(fmt.Errorf("%sunable to process directory: %w", errPrefix, err), errCode)
 			}
 			break
 		}
@@ -268,14 +269,14 @@ func Convert(ctx *cli.Context) (err error) {
 			ok, err := isArchiveFile(head)
 			if err != nil {
 				// checking format - but cannot open target file
-				return cli.NewExitError(errors.Wrapf(err, "%sunable to check archive type", errPrefix), errCode)
+				return cli.NewExitError(fmt.Errorf("%sunable to check archive type: %w", errPrefix, err), errCode)
 			}
 
 			if ok {
 				// we need to look inside to see if path makes sense
 				tail = strings.TrimPrefix(strings.TrimPrefix(src, head), string(filepath.Separator))
 				if err := processArchive(head, tail, "", format, nodirs, stk, overwrite, cpage, dst, env); err != nil {
-					return cli.NewExitError(errors.Wrapf(err, "%sunable to process archive", errPrefix), errCode)
+					return cli.NewExitError(fmt.Errorf("%sunable to process archive: %w", errPrefix, err), errCode)
 				}
 				break
 			}
@@ -284,8 +285,7 @@ func Convert(ctx *cli.Context) (err error) {
 			ok, enc, err = isBookFile(head)
 			if err != nil {
 				// checking format - but cannot open target file
-				return cli.NewExitError(errors.Wrapf(err, "%sunable to check file type", errPrefix), errCode)
-
+				return cli.NewExitError(fmt.Errorf("%sunable to check file type: %w", errPrefix, err), errCode)
 			}
 
 			if ok && len(tail) == 0 {
@@ -303,16 +303,16 @@ func Convert(ctx *cli.Context) (err error) {
 			}
 
 			return cli.NewExitError(
-				errors.Errorf("%sinput was not recognized as FB2 book (%s)", errPrefix, head),
+				fmt.Errorf("%sinput was not recognized as FB2 book (%s)", errPrefix, head),
 				errCode)
 		}
 
 		return cli.NewExitError(
-			errors.Errorf("%sunexpected path mode for (%s) => (%s)", errPrefix, head, strings.TrimPrefix(src, head)),
+			fmt.Errorf("%sunexpected path mode for (%s) => (%s)", errPrefix, head, strings.TrimPrefix(src, head)),
 			errCode)
 	}
 	if len(head) == 0 {
-		return cli.NewExitError(errors.Errorf("%sinput source was not found (%s)", errPrefix, src), errCode)
+		return cli.NewExitError(fmt.Errorf("%sinput source was not found (%s)", errPrefix, src), errCode)
 	}
 
 	return nil

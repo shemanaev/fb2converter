@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 
@@ -32,12 +33,12 @@ func SyncCovers(ctx *cli.Context) error {
 
 	in, err := filepath.Abs(ctx.Args().Get(0))
 	if err != nil {
-		return cli.NewExitError(errors.Wrapf(err, "%swrong book source has been specified", errPrefix), errCode)
+		return cli.NewExitError(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
 	}
 
 	dir, file := in, ""
 	if info, err := os.Stat(in); err != nil {
-		return cli.NewExitError(errors.Wrapf(err, "%swrong book source has been specified", errPrefix), errCode)
+		return cli.NewExitError(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
 	} else if info.Mode().IsRegular() {
 		dir, file = filepath.Split(in)
 	}
