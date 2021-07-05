@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/processor"
@@ -25,7 +25,7 @@ func SyncCovers(ctx *cli.Context) error {
 		errCode   = 1
 	)
 
-	env := ctx.GlobalGeneric(state.FlagName).(*state.LocalEnv)
+	env := ctx.Generic(state.FlagName).(*state.LocalEnv)
 
 	if len(ctx.Args().Get(0)) == 0 {
 		return cli.NewExitError(errors.New(errPrefix+"book source has not been specified"), errCode)

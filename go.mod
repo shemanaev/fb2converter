@@ -15,7 +15,7 @@ require (
 	github.com/neurosnap/sentences v1.0.9 // indirect
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/profile v1.6.0
-	github.com/urfave/cli v1.22.5
+	github.com/urfave/cli/v2 v2.3.0
 	go.uber.org/zap v1.18.1
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d

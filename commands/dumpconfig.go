@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/state"
@@ -21,7 +21,7 @@ func DumpConfig(ctx *cli.Context) error {
 		errCode   = 1
 	)
 
-	env := ctx.GlobalGeneric(state.FlagName).(*state.LocalEnv)
+	env := ctx.Generic(state.FlagName).(*state.LocalEnv)
 
 	fname := ctx.Args().Get(0)
 
