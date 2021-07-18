@@ -253,23 +253,3 @@ func CreateAnchorLinkKeywordsMap(name string, bodyNumber, noteNumber int) map[st
 
 	return rd
 }
-
-// AppendIfMissing well append string to slice only if it is not there already.
-func AppendIfMissing(slice []string, str string) []string {
-	for _, s := range slice {
-		if s == str {
-			return slice
-		}
-	}
-	return append(slice, str)
-}
-
-// IsOneOf checks if string is present in slice of strings. Comparison is case insensitive.
-func IsOneOf(name string, names []string) bool {
-	for _, n := range names {
-		if strings.EqualFold(name, n) {
-			return true
-		}
-	}
-	return false
-}

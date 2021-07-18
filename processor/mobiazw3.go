@@ -14,13 +14,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/processor/internal/mobi"
+	"github.com/rupor-github/fb2converter/processor/mobi"
 )
 
 // FinalizeMOBI produces final mobi file out of previously saved temporary files.
 func (p *Processor) FinalizeMOBI(fname string) error {
 
-	tmp, err := p.generateIntermediateContent(fname)
+	tmp, err := p.generateIntermediateMOBIContent(fname)
 	if err != nil {
 		return fmt.Errorf("unable to generate intermediate content: %w")
 	}
@@ -74,7 +74,7 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 // FinalizeAZW3 produces final azw3 file out of previously saved temporary files.
 func (p *Processor) FinalizeAZW3(fname string) error {
 
-	tmp, err := p.generateIntermediateContent(fname)
+	tmp, err := p.generateIntermediateMOBIContent(fname)
 	if err != nil {
 		return fmt.Errorf("unable to generate intermediate content: %w", err)
 	}
@@ -125,8 +125,8 @@ func (p *Processor) FinalizeAZW3(fname string) error {
 	return nil
 }
 
-// generateIntermediateContent produces temporary mobi file, presently by running kindlegen and returns its full path.
-func (p *Processor) generateIntermediateContent(fname string) (string, error) {
+// generateIntermediateMOBIContent produces temporary mobi file, presently by running kindlegen and returns its full path.
+func (p *Processor) generateIntermediateMOBIContent(fname string) (string, error) {
 
 	workDir := filepath.Join(p.tmpDir, config.DirEpub, config.DirContent)
 	if p.kind == InEpub {

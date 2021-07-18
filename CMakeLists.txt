@@ -15,13 +15,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # Release installation directory
 if(CMAKE_CROSSCOMPILING)
     if(MSYSTEM_NAME STREQUAL "win32")
-        set(KINDLEGEN "${PROJECT_SOURCE_DIR}/kindlegen/windows/kindlegen.exe")
+        set(KINDLEGEN ${PROJECT_SOURCE_DIR}/kindlegen/windows/kindlegen.exe)
+        list(APPEND WINPTY ${PROJECT_SOURCE_DIR}/winpty/32/winpty-agent.exe ${PROJECT_SOURCE_DIR}/winpty/32/winpty.dll)
         set(CROSS_GOOS windows)
         set(CROSS_GOARCH 386)
         set(INSTALL_SUBDIR "/fb2converter")
         message(STATUS "Targeting 32 bits Windows executable")
     elseif(MSYSTEM_NAME STREQUAL "win64")
-        set(KINDLEGEN "${PROJECT_SOURCE_DIR}/kindlegen/windows/kindlegen.exe")
+        set(KINDLEGEN ${PROJECT_SOURCE_DIR}/kindlegen/windows/kindlegen.exe)
+        list(APPEND WINPTY ${PROJECT_SOURCE_DIR}/winpty/64/winpty-agent.exe ${PROJECT_SOURCE_DIR}/winpty/64/winpty.dll)
         set(CROSS_GOOS windows)
         set(CROSS_GOARCH amd64)
         set(INSTALL_SUBDIR "/fb2converter")
@@ -133,6 +135,7 @@ set(FB2C_TARGET ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/fb2c${CMAKE_EXECUTABLE_SU
 set(KINDLEGEN_TARGET ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/kindlegen${CMAKE_EXECUTABLE_SUFFIX})
 list(APPEND ZIP_DEPS ${PROJECT_BINARY_DIR}/changelog.txt ${FB2C_TARGET} ${KINDLEGEN_TARGET})
 if(CROSS_GOOS STREQUAL "windows")
+    list(APPEND WINPTY_TARGET ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/winpty-agent.exe ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/winpty.dll)
     # myhomelib suppport
     list(APPEND ZIP_DEPS ${PROJECT_BINARY_DIR}/fb2mobi/fb2mobi${CMAKE_EXECUTABLE_SUFFIX} ${PROJECT_BINARY_DIR}/fb2epub/fb2epub${CMAKE_EXECUTABLE_SUFFIX})
 endif()
@@ -149,13 +152,27 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/fb2c_${MSYSTEM_NAME}.zip
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 
 add_custom_target(bin_fb2c ALL
-    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} 
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} ${WINPTY_TARGET}
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET}
+        github.com/rupor-github/fb2converter/cmd/fb2c
     BYPRODUCTS ${FB2C_TARGET}
     COMMENT "Building fb2c..."
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 if(CROSS_GOOS STREQUAL "windows")
+    add_custom_target(mk_install_subdir
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}
+        WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
+    add_custom_command(OUTPUT ${KINDLEGEN_TARGET}
+        DEPENDS ${KINDLEGEN} mk_install_subdir
+        COMMAND ${CMAKE_COMMAND} -E copy ${KINDLEGEN} ${KINDLEGEN_TARGET}
+        COMMENT "Copying kindlegen..."
+        WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
+    add_custom_command(OUTPUT ${WINPTY_TARGET}
+        DEPENDS ${WINPTY} mk_install_subdir
+        COMMAND ${CMAKE_COMMAND} -E copy ${WINPTY} ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}
+        COMMENT "Copying winpty..."
+        WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
     # myhomelib suppport
     add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/fb2mobi/fb2mobi${CMAKE_EXECUTABLE_SUFFIX}
         COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${PROJECT_BINARY_DIR}/fb2mobi/fb2mobi${CMAKE_EXECUTABLE_SUFFIX}
@@ -214,7 +231,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     ########################################################################################################
 
     add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/stringer
-        COMMAND GOPATH=${GO_PATH} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -o ${PROJECT_BINARY_DIR}/stringer
+        COMMAND GOPATH=${GO_PATH} GOOS= GOARCH= ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -o ${PROJECT_BINARY_DIR}/stringer
             golang.org/x/tools/cmd/stringer
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Building stringer executable...")
@@ -223,7 +240,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/processor/enums_string.go
         DEPENDS ${PROJECT_BINARY_DIR}/stringer
             ${PROJECT_SOURCE_DIR}/processor/enums.go
-        COMMAND GOPATH=${GO_PATH} ${PROJECT_BINARY_DIR}/stringer
+            COMMAND ${PROJECT_BINARY_DIR}/stringer
                 -linecomment -type OutputFmt,NotesFmt,TOCPlacement,TOCType,APNXGeneration,StampPlacement,CoverProcessing
                 -output processor/enums_string.go
                 processor/enums.go

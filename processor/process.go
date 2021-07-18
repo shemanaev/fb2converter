@@ -31,6 +31,7 @@ import (
 	"github.com/rupor-github/fb2converter/config"
 	"github.com/rupor-github/fb2converter/etree"
 	"github.com/rupor-github/fb2converter/state"
+	"github.com/rupor-github/fb2converter/utils"
 )
 
 // InputFmt defines type of input we are processing.
@@ -75,7 +76,8 @@ type Processor struct {
 	speechTransform *config.Transformation
 	dashTransform   *config.Transformation
 	metaOverwrite   *config.MetaInfo
-	kindlegenPath   string
+	kindlegenPath   string         // For mobi/azw3 - full path to kindlegen executable
+	kpvEnv          *config.KPVEnv // For KPF/KFX - initialized kpv environment
 }
 
 // NewFB2 creates FB2 book processor and prepares necessary temporary directories.
@@ -160,8 +162,15 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 
 	if kindle {
 		// Fail early
-		if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
-			return nil, err
+		switch format {
+		case OMobi, OAzw3:
+			if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(env.Log); err != nil {
+				return nil, err
+			}
+		case OKfx:
+			if p.kpvEnv, err = env.Cfg.NewKPVEnv(env.Log); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -257,7 +266,7 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 	}
 
 	// Fail early
-	if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(); err != nil {
+	if p.kindlegenPath, err = env.Cfg.GetKindlegenPath(env.Log); err != nil {
 		return nil, err
 	}
 
@@ -812,7 +821,7 @@ func (p *Processor) processNotes() error {
 	notesPerBody := make(map[string]int)
 	for _, el := range p.doc.FindElements("./FictionBook/body[@name]") {
 		name := getAttrValue(el, "name")
-		if !IsOneOf(name, p.env.Cfg.Doc.Notes.BodyNames) {
+		if !utils.IsOneOf(name, p.env.Cfg.Doc.Notes.BodyNames) {
 			continue
 		}
 		notesPerBody[name] = 0

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/rupor-github/fb2converter/etree"
+	"github.com/rupor-github/fb2converter/utils"
 )
 
 var attr = etree.NewAttr
@@ -21,7 +22,7 @@ func extractText(e *etree.Element, head, skipLinks bool) string {
 	res := e.Text()
 	for _, c := range e.ChildElements() {
 		switch {
-		case IsOneOf(c.Tag, []string{"p", "div"}):
+		case utils.IsOneOf(c.Tag, []string{"p", "div"}):
 			res += "\n" + extractText(c, false, skipLinks)
 		case c.Tag != "a" || !skipLinks:
 			res += extractText(c, false, skipLinks)

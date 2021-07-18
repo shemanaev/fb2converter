@@ -35,7 +35,7 @@ const (
 
 // Various directories used across the program.
 const (
-	// DirKdf        = "KDF"
+	DirKdf        = "KDF"
 	DirKfx        = "kfx"
 	DirEpub       = "epub"
 	DirContent    = "OEBPS"
@@ -200,6 +200,10 @@ type Doc struct {
 		PageMap          string `json:"generate_apnx"`
 		ForceASIN        bool   `json:"force_asin_on_azw3"`
 	} `json:"kindlegen"`
+	//
+	KPreViewer struct {
+		Path string `json:"path"`
+	} `json:"kindle_previewer"`
 }
 
 // names of supported vignettes
@@ -464,7 +468,7 @@ func (conf *Config) GetOverwrite(name string) *MetaInfo {
 }
 
 // GetKindlegenPath provides platform specific path to the kindlegen executable.
-func (conf *Config) GetKindlegenPath() (string, error) {
+func (conf *Config) GetKindlegenPath(log *zap.Logger) (string, error) {
 
 	fname := conf.Doc.Kindlegen.Path
 	expath, err := os.Executable()
@@ -485,6 +489,7 @@ func (conf *Config) GetKindlegenPath() (string, error) {
 	if _, err = os.Stat(fname); err != nil {
 		return "", fmt.Errorf("unable to find kindlegen: %w", err)
 	}
+	log.Debug("kindlegen found", zap.String("env", fname))
 	return fname, nil
 }
 
