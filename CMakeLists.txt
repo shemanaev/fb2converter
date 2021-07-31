@@ -260,7 +260,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_target(lint
         DEPENDS ${PROJECT_BINARY_DIR}/staticcheck
         COMMAND ${PROJECT_BINARY_DIR}/staticcheck -tests=false ./...
-        COMMENT "Linting project with ${GO_LINTER}..."
+        COMMENT "Linting project..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
     ########################################################################################################
