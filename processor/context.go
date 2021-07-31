@@ -206,7 +206,7 @@ type stackedBool struct {
 	ptr *bool
 }
 
-//nolint:unused
+//lint:ignore U1000 we want interface to be complete
 func (pb *stackedBool) val() bool {
 	return *pb.ptr
 }
@@ -234,12 +234,12 @@ type stackedInt struct {
 	ptr *int
 }
 
-//nolint:unused
+//lint:ignore U1000 we want interface to be complete
 func (pi *stackedInt) val() int {
 	return *pi.ptr
 }
 
-//nolint:unused
+//lint:ignore U1000 we want interface to be complete
 func (pi *stackedInt) set(val int) {
 	*pi.ptr = val
 }

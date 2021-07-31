@@ -40,7 +40,7 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	if c.Bool("debug") {
 		wd, err := os.Getwd()
 		if err != nil {
-			return cli.NewExitError(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
+			return cli.Exit(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
 		}
 		if d := c.String("debugdir"); len(d) > 0 {
 			wd = d
@@ -56,7 +56,7 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	// Prepare configuration
 	fconfig := c.StringSlice("config")
 	if env.Cfg, err = config.BuildConfig(fconfig...); err != nil {
-		return cli.NewExitError(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
+		return cli.Exit(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
 	}
 
 	// We may want to do some profiling
@@ -88,7 +88,7 @@ func (w *appWrapper) beforeCommandRun(c *cli.Context) error {
 	// Prepare logs
 	env.Log, err = env.Cfg.PrepareLog()
 	if err != nil {
-		return cli.NewExitError(fmt.Errorf("%sunable to create logs: %w", errPrefix, err), errCode)
+		return cli.Exit(fmt.Errorf("%sunable to create logs: %w", errPrefix, err), errCode)
 	}
 
 	w.log = env.Log

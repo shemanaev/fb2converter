@@ -28,17 +28,17 @@ func SyncCovers(ctx *cli.Context) error {
 	env := ctx.Generic(state.FlagName).(*state.LocalEnv)
 
 	if len(ctx.Args().Get(0)) == 0 {
-		return cli.NewExitError(errors.New(errPrefix+"book source has not been specified"), errCode)
+		return cli.Exit(errors.New(errPrefix+"book source has not been specified"), errCode)
 	}
 
 	in, err := filepath.Abs(ctx.Args().Get(0))
 	if err != nil {
-		return cli.NewExitError(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
+		return cli.Exit(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
 	}
 
 	dir, file := in, ""
 	if info, err := os.Stat(in); err != nil {
-		return cli.NewExitError(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
+		return cli.Exit(fmt.Errorf("%swrong book source has been specified: %w", errPrefix, err), errCode)
 	} else if info.Mode().IsRegular() {
 		dir, file = filepath.Split(in)
 	}
@@ -56,7 +56,7 @@ func SyncCovers(ctx *cli.Context) error {
 		}
 	}
 	if len(sysdir) == 0 {
-		return cli.NewExitError(errors.New(errPrefix+"unable to find Kindle system directory along the specified path"), errCode)
+		return cli.Exit(errors.New(errPrefix+"unable to find Kindle system directory along the specified path"), errCode)
 	}
 
 	files, count := 0, 0

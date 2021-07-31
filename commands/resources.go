@@ -25,15 +25,14 @@ func ExportResources(ctx *cli.Context) error {
 
 	fname := ctx.Args().Get(0)
 	if len(fname) == 0 {
-		return cli.NewExitError(errors.New(errPrefix+"destination directory has not been specified"), errCode)
+		return cli.Exit(errors.New(errPrefix+"destination directory has not been specified"), errCode)
 	}
-	//nolint:gocritic
 	if info, err := os.Stat(fname); err != nil && !os.IsNotExist(err) {
-		return cli.NewExitError(errors.New(errPrefix+"unable to access destination directory"), errCode)
+		return cli.Exit(errors.New(errPrefix+"unable to access destination directory"), errCode)
 	} else if err != nil {
-		return cli.NewExitError(errors.New(errPrefix+"destination directory does not exits"), errCode)
+		return cli.Exit(errors.New(errPrefix+"destination directory does not exits"), errCode)
 	} else if !info.IsDir() {
-		return cli.NewExitError(errors.New(errPrefix+"destination is not a directory"), errCode)
+		return cli.Exit(errors.New(errPrefix+"destination is not a directory"), errCode)
 	}
 
 	ignoreNames := map[string]bool{
@@ -47,7 +46,7 @@ func ExportResources(ctx *cli.Context) error {
 			if _, ignore := ignoreNames[a]; len(env.Debug) != 0 || !ignore {
 				err = static.RestoreAssets(fname, a)
 				if err != nil {
-					return cli.NewExitError(errors.New(errPrefix+"unable to store resources"), errCode)
+					return cli.Exit(errors.New(errPrefix+"unable to store resources"), errCode)
 				}
 			}
 		}

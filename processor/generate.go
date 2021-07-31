@@ -212,7 +212,7 @@ func (ts *stackTOC) push(level int, value *etree.Element) {
 	ts.data = append(ts.data, &stackItem{level, value})
 }
 
-func (ts *stackTOC) pop() (int, *etree.Element) { //nolint:unparam
+func (ts *stackTOC) pop() (int, *etree.Element) {
 	value := ts.data[len(ts.data)-1]
 	ts.data[len(ts.data)-1] = nil
 	ts.data = ts.data[:len(ts.data)-1]
@@ -324,7 +324,7 @@ func (p *Processor) prepareStylesheet() error {
 
 	processURL := func(index int, name string) string {
 
-		if strings.Index(name, "\\") != -1 {
+		if strings.Contains(name, "\\") {
 			p.env.Log.Warn("Stylesheet has bad url with backslashes in the path. Trying to correct...", zap.String("url", name))
 		}
 

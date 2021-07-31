@@ -45,15 +45,14 @@ func getFullTextFragment(e *etree.Element) string {
 	return extractText(e, true, false)
 }
 
-//nolint:deadcode,unused
-func getXMLFragment(d *etree.Document) string {
-	d.IndentTabs()
-	s, err := d.WriteToString()
-	if err != nil {
-		return err.Error()
-	}
-	return s
-}
+// func getXMLFragment(d *etree.Document) string {
+// 	d.IndentTabs()
+// 	s, err := d.WriteToString()
+// 	if err != nil {
+// 		return err.Error()
+// 	}
+// 	return s
+// }
 
 func getXMLFragmentFromElement(e *etree.Element) string {
 	d := etree.NewDocument()

@@ -1,4 +1,3 @@
-//nolint:errcheck
 package mobi
 
 // Despite obvious ineffectiveness I decided to repeat python code "ad verbum" for now, it is very time
@@ -37,7 +36,6 @@ type Splitter struct {
 }
 
 // NewSplitter returns pointer to Slitter with parsed mobi file.
-//nolint:interfacer
 func NewSplitter(fname string, u uuid.UUID, asin string, combo, nonPersonal, forceASIN bool, log *zap.Logger) (*Splitter, error) {
 
 	data, err := os.ReadFile(fname)

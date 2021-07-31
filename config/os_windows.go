@@ -13,9 +13,9 @@ import (
 	"syscall"
 
 	"github.com/rupor-github/fb2converter/config/winpty"
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
+	"golang.org/x/term"
 )
 
 // EnableColorOutput checks if colorized output is possible and
@@ -37,7 +37,7 @@ func EnableColorOutput(stream *os.File) bool {
 		return false
 	}
 
-	if !terminal.IsTerminal(int(stream.Fd())) {
+	if !term.IsTerminal(int(stream.Fd())) {
 		return false
 	}
 
@@ -51,16 +51,13 @@ func EnableColorOutput(stream *os.File) bool {
 	mode |= EnableVirtualTerminalProcessing
 
 	err = windows.SetConsoleMode(windows.Handle(stream.Fd()), mode)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // CleanFileName removes not allowed characters form file name.
 func CleanFileName(in string) string {
 	out := strings.Map(func(sym rune) rune {
-		if strings.IndexRune(`<>":/\|?*`+string(os.PathSeparator)+string(os.PathListSeparator), sym) != -1 {
+		if strings.ContainsRune(`<>":/\|?*`+string(os.PathSeparator)+string(os.PathListSeparator), sym) {
 			return -1
 		}
 		return sym
@@ -74,9 +71,12 @@ func CleanFileName(in string) string {
 // FindConverter attempts to find main conversion engine - myhomelib support.
 func FindConverter(expath string) string {
 
-	expath, err := os.Executable()
-	if err != nil {
-		return ""
+	var err error
+	if len(expath) == 0 {
+		expath, err = os.Executable()
+		if err != nil {
+			return ""
+		}
 	}
 
 	wd := filepath.Dir(expath)

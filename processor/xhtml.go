@@ -554,7 +554,7 @@ func init() {
 		"cite": func(p *Processor, from, to *etree.Element) error {
 			return p.transfer(from, to, "div", "cite")
 		},
-		"empty-line": func(_ *Processor, _, to *etree.Element) error { //nolint:unparam
+		"empty-line": func(_ *Processor, _, to *etree.Element) error {
 			to.AddNext("div", attr("class", "emptyline"))
 			return nil
 		},

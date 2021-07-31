@@ -11,7 +11,7 @@ type testCase struct {
 }
 
 var cases = []testCase{
-	testCase{
+	{
 		in: `#l #f #m`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -20,7 +20,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name First_Name Middle_Name`,
 	},
-	testCase{
+	{
 		in: `#l #f{ #m}`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -29,7 +29,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name First_Name Middle_Name`,
 	},
-	testCase{
+	{
 		in: `#l #f{ #m}`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -38,7 +38,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name First_Name`,
 	},
-	testCase{
+	{
 		in: `#l #f{ aaaaaaaaaa }`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -47,7 +47,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name First_Name`,
 	},
-	testCase{
+	{
 		in: `#l{ #f{ #m}}`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -56,7 +56,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name First_Name`,
 	},
-	testCase{
+	{
 		in: `#l{ \{mm\} #f{ #m}}`,
 		m: map[string]string{
 			"#l": "Last_Name",
@@ -65,7 +65,7 @@ var cases = []testCase{
 		},
 		out: `Last_Name {mm} First_Name`,
 	},
-	testCase{
+	{
 		in: `#authors #title #author`,
 		m: map[string]string{
 			"#author":  "_single_author_",
@@ -74,7 +74,7 @@ var cases = []testCase{
 		},
 		out: `_multiple_authors_ book-title _single_author_`,
 	},
-	testCase{
+	{
 		in: `#abbrseries #ABBRseries`,
 		m: map[string]string{
 			"#abbrseries": "_a_b_c_",

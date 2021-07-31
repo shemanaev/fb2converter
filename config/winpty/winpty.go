@@ -188,7 +188,7 @@ func (w *WinPTY) Run(cmd *exec.Cmd) error {
 	}
 
 	var createProcessErr uint32
-	spawnRet, _, err := winpty_spawn.Call(w.winPTYHandle,
+	spawnRet, _, _ := winpty_spawn.Call(w.winPTYHandle,
 		spawnCfg,
 		uintptr(unsafe.Pointer(&w.childHandle)),
 		uintptr(0),

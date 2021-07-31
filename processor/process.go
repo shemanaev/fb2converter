@@ -1,5 +1,4 @@
 // Package processor does actual work.
-//nolint:goconst
 package processor
 
 import (

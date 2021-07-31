@@ -22,7 +22,7 @@ func (p *Processor) FinalizeMOBI(fname string) error {
 
 	tmp, err := p.generateIntermediateMOBIContent(fname)
 	if err != nil {
-		return fmt.Errorf("unable to generate intermediate content: %w")
+		return fmt.Errorf("unable to generate intermediate content: %w", err)
 	}
 
 	if _, err := os.Stat(fname); err == nil {

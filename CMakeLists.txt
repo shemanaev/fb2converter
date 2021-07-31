@@ -251,31 +251,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Go linter
     ########################################################################################################
 
-    # Running linters on main target
-    find_program(GO_LINTER golangci-lint PATHS ${PROJECT_BINARY_DIR} NO_DEFAULT_PATH)
-    if(NOT GO_LINTER)
-        set(golangci-lint-ver "1.41.1")
-        message(STATUS "Preparing golangci-lint ${golangci-lint-ver}")
-        file(DOWNLOAD "https://github.com/golangci/golangci-lint/releases/download/v${golangci-lint-ver}/golangci-lint-${golangci-lint-ver}-linux-amd64.tar.gz" ${PROJECT_BINARY_DIR}/golangci-lint.tar.gz
-            INACTIVITY_TIMEOUT 60
-            TIMEOUT 300
-            STATUS DOWNLOAD_RES
-            EXPECTED_HASH SHA256=23e1078ab00a750afcde7e7eb5aab8e908ef18bee5486eeaa2d52ee57d178580)
-        list(GET DOWNLOAD_RES 0 RES)
-        list(GET DOWNLOAD_RES 1 MSG)
-        if(RES)
-            message(FATAL_ERROR "${MSG} : ${RES}")
-        endif()
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf golangci-lint.tar.gz WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy golangci-lint-${golangci-lint-ver}-linux-amd64/golangci-lint golangci-lint WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory golangci-lint-${golangci-lint-ver}-linux-amd64 WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E remove golangci-lint.tar.gz WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-        set(GO_LINTER ${PROJECT_BINARY_DIR}/golangci-lint)
-    endif()
+    add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/staticcheck
+        COMMAND GOPATH=${GO_PATH} GOOS= GOARCH= ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -o ${PROJECT_BINARY_DIR}/staticcheck
+            honnef.co/go/tools/cmd/staticcheck
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        COMMENT "Building staticcheck executable...")
 
     add_custom_target(lint
-        COMMAND ${GO_ENV} ${GO_LINTER} run
-        COMMENT "Mega-linting project with ${GO_LINTER}..."
+        DEPENDS ${PROJECT_BINARY_DIR}/staticcheck
+        COMMAND ${PROJECT_BINARY_DIR}/staticcheck -tests=false ./...
+        COMMENT "Linting project with ${GO_LINTER}..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
     ########################################################################################################

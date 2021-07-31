@@ -1,4 +1,3 @@
-//nolint:goconst
 package processor
 
 import (
@@ -11,12 +10,13 @@ import (
 	"path/filepath"
 
 	// additional supported image formats
-	_ "golang.org/x/image/bmp"
-	_ "golang.org/x/image/tiff"
-	_ "golang.org/x/image/webp"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/webp"
 
 	"github.com/disintegration/imaging"
 	"go.uber.org/zap"
@@ -164,7 +164,7 @@ func (b *binImage) flush(path string) error {
 
 	// Sanity - should never happen
 	if len(b.data) == 0 {
-		return fmt.Errorf("No image to save %s (%s)", b.id, filepath.Join(newdir, b.fname))
+		return fmt.Errorf("no image to save %s (%s)", b.id, filepath.Join(newdir, b.fname))
 	}
 
 Storing:
