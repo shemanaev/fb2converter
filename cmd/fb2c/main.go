@@ -42,10 +42,13 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 		if err != nil {
 			return cli.Exit(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
 		}
-		if d := c.String("debugdir"); len(d) > 0 {
+		if d := c.String("debug-dir"); len(d) > 0 {
 			wd = d
 		}
 		env.Debug = wd
+		if err := config.CheckPath(env.Debug); err != nil {
+			return cli.Exit(fmt.Errorf("%swrong path for debug artifacts: %w", errPrefix, err), errCode)
+		}
 	}
 
 	mhl := c.Int("mhl")
@@ -178,8 +181,9 @@ func main() {
 		&cli.GenericFlag{Name: state.FlagName, Hidden: true, Usage: "--internal--", Value: state.NewLocalEnv()},
 		&cli.IntFlag{Name: "mhl", Value: config.MhlNone, Hidden: true, Usage: "--internal--"},
 
-		&cli.StringSliceFlag{Name: "config, c", Usage: "load configuration from `FILE` (YAML, TOML or JSON). if FILE is \"-\" JSON will be expected from STDIN"},
-		&cli.BoolFlag{Name: "debug, d", Usage: "leave behind various artifacts for debugging (do not delete intermediate results)"},
+		&cli.StringSliceFlag{Name: "config", Aliases: []string{"c"}, Usage: "load configuration from `FILE` (YAML, TOML or JSON). if FILE is \"-\" JSON will be expected from STDIN"},
+		&cli.BoolFlag{Name: "debug", Aliases: []string{"d"}, Usage: "leave behind various artifacts for debugging (do not delete intermediate results)"},
+		&cli.StringFlag{Name: "debug-dir", Aliases: []string{"r"}, Usage: "`DIRECTORY` for debugging artifacts. (default: \"" + config.DirDebug + "\" in current working directory)"},
 	}
 
 	app.Commands = []*cli.Command{

@@ -35,6 +35,7 @@ const (
 
 // Various directories used across the program.
 const (
+	DirDebug      = "_deb_fb2c"
 	DirKdf        = "KDF"
 	DirKfx        = "kfx"
 	DirEpub       = "epub"

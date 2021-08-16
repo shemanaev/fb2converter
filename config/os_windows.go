@@ -1,4 +1,4 @@
-// +build windows
+//go:build windows
 
 package config
 
@@ -17,6 +17,18 @@ import (
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/term"
 )
+
+// CheckPath is called to make sure that path for storing debug related artifacts is OK.
+func CheckPath(path string) error {
+	if strings.HasPrefix(path, `\\wsl$\`) {
+		ms := 20
+		if len(path) < ms {
+			ms = len(path)
+		}
+		return fmt.Errorf("windows build of converter has problems accessing files in debug directory using P9 prototcol [%s...], use --debug-dir to specify better location", path[:ms])
+	}
+	return nil
+}
 
 // EnableColorOutput checks if colorized output is possible and
 // enables proper VT100 sequence processing in Windows 10 console.

@@ -51,11 +51,11 @@ func (p *Processor) FinalizeKFX(fname string) error {
 		)
 	}(start)
 
-	mover, err := kfx.NewMover(kpf, outDir, p.env.Log)
+	tr, err := kfx.NewTransformer(kpf, outDir, p.env.Log)
 	if err != nil {
 		return fmt.Errorf("unable to parse intermediate content file: %w", err)
 	}
-	_ = mover
+	_ = tr
 	// if err := splitter.SaveResult(fname); err != nil {
 	// 	return fmt.Errorf("unable to save resulting MOBI: %w", err)
 	// }
@@ -109,9 +109,8 @@ func checkResults(outDir string, log *zap.Logger) (string, error) {
 		hdrETStatus            // "Enhanced Typesetting Status"
 		hdrStatus              // "Conversion Status"
 		hdrErrors              // "Error Count"
-		hdrWarnings            // "Warning Count"
 		hdrInfo                // "Quality Issue Count"
-		hdrBook                // "Output File Path"
+		hdrBook                // "Output File Path" - output
 		hdrLog                 // "Log File Path"
 		hdrReport              // "Quality Report Path"
 	)
@@ -139,11 +138,8 @@ func checkResults(outDir string, log *zap.Logger) (string, error) {
 	for i := 0; i < len(headers); i++ {
 		fields = append(fields, zap.String(headers[i], record[i]))
 	}
-	log.Info("KPV summary", fields...)
+	log.Debug("KPV summary", fields...)
 
-	// TODO: additional version dependent log:  if len(record[hdrLog]) > 0
-
-	// Various superficial checks, mostly for clarity
 	if !strings.EqualFold(record[hdrETStatus], "Supported") {
 		return "", fmt.Errorf("wrong Enhanced Typesetting Status: %s", record[hdrETStatus])
 	}
@@ -152,6 +148,11 @@ func checkResults(outDir string, log *zap.Logger) (string, error) {
 	}
 	if !strings.EqualFold(record[hdrErrors], "0") {
 		return "", errors.New("errors during conversion, see log for details")
+	}
+	// Make sure we are picking file path from proper column, sometime around 3.55 number of columt changed and
+	// resulting diagnostic was confising at best: not a zip file.
+	if !strings.EqualFold(headers[hdrBook], "Output File Path") {
+		return "", errors.New("unable to detect resulting KPF path, possible kindle viewer version change")
 	}
 	if len(record[hdrBook]) == 0 {
 		return "", errors.New("unable to detect resulting KPF, path is empty")

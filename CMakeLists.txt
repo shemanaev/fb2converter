@@ -54,7 +54,7 @@ else()
     endif()
 endif()
 
-find_package(Go 1.16 REQUIRED)
+find_package(Go 1.17 REQUIRED)
 find_package(Git REQUIRED)
 
 # Make sure we setup go properly
@@ -196,9 +196,6 @@ add_custom_command(OUTPUT ${KINDLEGEN_TARGET}
 # Test targets: to test various parts of the system specify multiple test targets
 ########################################################################################################
 
-# Temporary directory for test results
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory tests_results)
-
 add_custom_target(test_all
     DEPENDS test_processor test_hyphenator
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/dimple
@@ -259,7 +256,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     add_custom_target(lint
         DEPENDS ${PROJECT_BINARY_DIR}/staticcheck
-        COMMAND ${PROJECT_BINARY_DIR}/staticcheck -tests=false ./...
+        COMMAND ${PROJECT_BINARY_DIR}/staticcheck -f stylish -tests=false ./...
         COMMENT "Linting project..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -269,14 +266,27 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     add_custom_target(deps_tidy
         SOURCES ${PROJECT_SOURCE_DIR}/go.mod
-        COMMAND GOPATH=${GO_PATH} ${GO_EXECUTABLE} mod tidy
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod tidy -go=${GO_VERSION}
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Cleaning dependencies (go mod tidy)"
         VERBATIM)
 
+    add_custom_target(deps_download
+        SOURCES ${PROJECT_SOURCE_DIR}/go.mod
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod download all
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        COMMENT "Downloading dependencies (go mod download)"
+        VERBATIM)
+
+    add_custom_target(deps_print
+        SOURCES ${PROJECT_SOURCE_DIR}/go.mod
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod graph -go=${GO_VERSION}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Printing dependencies (go mod graph)")
+
     add_custom_target(deps_vendor
         SOURCES ${PROJECT_SOURCE_DIR}/go.mod
-        COMMAND GOPATH=${GO_PATH} ${GO_EXECUTABLE} mod vendor
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod vendor
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Creating vendor directory (go mod vendor)"
         VERBATIM)

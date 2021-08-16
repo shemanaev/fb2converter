@@ -1,4 +1,4 @@
-// +build linux
+//go:build linux
 
 package config
 
@@ -8,6 +8,11 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+// CheckPath is called to make sure that path for storing debug related artifacts is OK.
+func CheckPath(path string) error {
+	return nil
+}
 
 // EnableColorOutput checks if colorized output is possible.
 func EnableColorOutput(stream *os.File) bool {

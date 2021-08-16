@@ -16,7 +16,7 @@ var (
 	ErrNoKPVForOS = errors.New("kindle previewer is not supported for this OS/platform")
 
 	reKPVver           = regexp.MustCompile(`^Kindle\s+Previewer\s+([0-9]+\.[0-9]+\.[0-9]+)\s+Copyright\s+\(c\)\s+Amazon\.com.*$`)
-	minSupportedKPVver = semver.Version{Major: 3, Minor: 38, Patch: 0}
+	minSupportedKPVver = semver.Version{Major: 3, Minor: 56, Patch: 1}
 )
 
 // KPVEnv has everything necessary to run kindle previewer in command line mode and process results.

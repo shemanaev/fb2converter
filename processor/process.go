@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"math/rand"
 	"mime"
 	"net/url"
 	"os"
@@ -20,7 +19,6 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
-	"github.com/oklog/ulid"
 	"go.uber.org/zap"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/language"
@@ -189,12 +187,7 @@ func NewFB2(r io.Reader, unknownEncoding bool, src, dst string, nodirs, stk, ove
 
 	// re-route temporary directory for debugging
 	if len(env.Debug) != 0 {
-		t := time.Now()
-		// ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
-		// if err != nil {
-		// 	return nil, errors.Wrap(err, "unable to allocate ULID")
-		// }
-		p.tmpDir = filepath.Join(env.Debug, "fb2c_deb", fmt.Sprintf("[%s]+%020d", strings.TrimSuffix(filepath.Base(src), filepath.Ext(src)), t.UnixNano()))
+		p.tmpDir = filepath.Join(env.Debug, config.DirDebug, fmt.Sprintf("[%s]%020d", strings.TrimSuffix(filepath.Base(src), filepath.Ext(src)), time.Now().UnixNano()))
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
 			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
@@ -271,12 +264,7 @@ func NewEPUB(r io.Reader, src, dst string, nodirs, stk, overwrite bool, format O
 
 	// re-route temporary directory for debugging
 	if len(env.Debug) != 0 {
-		t := time.Now()
-		ulid, err := ulid.New(ulid.Timestamp(t), ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0))
-		if err != nil {
-			return nil, fmt.Errorf("unable to allocate ULID: %w", err)
-		}
-		p.tmpDir = filepath.Join(env.Debug, "fb2c_deb", strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))+"_"+ulid.String())
+		p.tmpDir = filepath.Join(env.Debug, config.DirDebug, fmt.Sprintf("[%s]%020d", strings.TrimSuffix(filepath.Base(src), filepath.Ext(src)), time.Now().UnixNano()))
 		if err = os.MkdirAll(p.tmpDir, 0700); err != nil {
 			return nil, fmt.Errorf("unable to create temporary directory: %w", err)
 		}
