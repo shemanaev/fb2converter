@@ -151,8 +151,10 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/fb2c_${MSYSTEM_NAME}.zip
     COMMENT "Archiving release..."
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 
+# make sure go always runs here - it will figure out the rest
 add_custom_target(bin_fb2c ALL
     DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} ${WINPTY_TARGET}
+    BYPRODUCTS ${FB2C_TARGET}
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET}
         github.com/rupor-github/fb2converter/cmd/fb2c
     BYPRODUCTS ${FB2C_TARGET}
