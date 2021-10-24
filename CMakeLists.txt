@@ -268,7 +268,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     add_custom_target(deps_tidy
         SOURCES ${PROJECT_SOURCE_DIR}/go.mod
-        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod tidy -go=${GO_VERSION}
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod tidy -go=${GO_LANG_VERSION}
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Cleaning dependencies (go mod tidy)"
         VERBATIM)
@@ -282,7 +282,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     add_custom_target(deps_print
         SOURCES ${PROJECT_SOURCE_DIR}/go.mod
-        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod graph -go=${GO_VERSION}
+        COMMAND ${GO_ENV} ${GO_EXECUTABLE} mod graph -go=${GO_LANG_VERSION}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Printing dependencies (go mod graph)")
 

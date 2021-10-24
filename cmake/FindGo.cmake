@@ -8,6 +8,7 @@
 #   GO_VERSION - Go version number
 #   GO_PLATFORM - i.e. linux
 #   GO_ARCH - i.e. amd64
+#   GO_LANG_VERSION - Go version number without patch, only major and minor versions
 # Example usage:
 #   find_package(Go 1.2 REQUIRED)
 
@@ -35,14 +36,16 @@ if(GO_EXECUTABLE)
         set(GO_VERSION ${CMAKE_MATCH_1})
         set(GO_PLATFORM ${CMAKE_MATCH_2})
         set(GO_ARCH ${CMAKE_MATCH_3})
+        string(REGEX MATCH "([0-9]+\\.[0-9]+)" GO_LANG_VERSION ${GO_VERSION})
     elseif(GO_VERSION_OUTPUT MATCHES "go version devel .* ([^/]+)/(.*)$")
         set(GO_VERSION "99-devel")
         set(GO_PLATFORM ${CMAKE_MATCH_1})
         set(GO_ARCH ${CMAKE_MATCH_2})
+        set(GO_LANG_VERSION, "99-devel")
         message("WARNING: Development version of Go being used, can't determine compatibility.")
     endif()
 endif()
 mark_as_advanced(GO_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Go REQUIRED_VARS GO_EXECUTABLE GO_VERSION GO_PLATFORM GO_ARCH VERSION_VAR GO_VERSION)
+find_package_handle_standard_args(Go REQUIRED_VARS GO_EXECUTABLE GO_PLATFORM GO_ARCH GO_LANG_VERSION GO_VERSION VERSION_VAR GO_VERSION)
