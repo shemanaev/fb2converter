@@ -617,8 +617,12 @@ func (conf *Config) PrepareLog() (*zap.Logger, error) {
 		logRequested = true
 	}
 
+	var newName string
 	if logRequested {
 		if f, err := opener(conf.FileLogger.Destination, conf.FileLogger.Mode); err == nil {
+			fileCore = zapcore.NewCore(fileEncoder, zapcore.Lock(f), logLevel)
+		} else if f, err = os.CreateTemp("", "conversion.*.log"); err == nil {
+			newName = f.Name()
 			fileCore = zapcore.NewCore(fileEncoder, zapcore.Lock(f), logLevel)
 		} else {
 			return nil, fmt.Errorf("unable to access file log destination (%s): %w", conf.FileLogger.Destination, err)
@@ -627,7 +631,13 @@ func (conf *Config) PrepareLog() (*zap.Logger, error) {
 		fileCore = zapcore.NewNopCore()
 	}
 
-	return zap.New(zapcore.NewTee(consoleCoreHP, consoleCoreLP, fileCore), zap.AddCaller()), nil
+	core := zap.New(zapcore.NewTee(consoleCoreHP, consoleCoreLP, fileCore), zap.AddCaller())
+	if len(newName) != 0 {
+		// log was redirected - we need to report this
+		core.Warn("Log file was redirected to new location", zap.String("location", newName))
+	}
+	return core, nil
+
 }
 
 // When logging error to console - do not output verbose message.

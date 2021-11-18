@@ -96,6 +96,8 @@ If you want resulting mobi files to be located alongside with original files, do
 ### MyHomeLib support:
 
 Windows builds come with full [MyHomeLib](https://github.com/OleksiyPenkov/myhomelib) support. Just make sure that your `MyHomeLib\converters` directory does not contain old
-`fb2mobi` and/or `fb2epub` subdirectories and unpack `fb2c-win32.7z` or `fb2c-win64.7z` there. It is a drop-in replacement and
-should be functional out of the box. Note, that `fb2mobi.exe` looks for `fb2mobi.toml` in its directory (similarly `fb2epub.exe` looks for `fb2epub.toml`),
-so any additional customizations are easy.
+`fb2mobi` and/or `fb2epub` subdirectories and unpack `fb2c_win32.zip` or `fb2c_win64.zip` there. It is a drop-in replacement and should be functional out of the box in most cases. 
+
+#### NOTE:
+* `fb2mobi.exe` looks for `fb2mobi.toml` in its directory (similarly `fb2epub.exe` looks for `fb2epub.toml`), so any additional customization is easy.
+* __Do not install__ MyHomeLib in either `%ProgramFiles%` or `%ProgramFiles(x86)%` directory - it is bad idea. Since for regular user accounts In Windows those places are __write-protected__ you will have difficulties copying converters there and converters will have problems creating conversion logs which are enabled by default.
