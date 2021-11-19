@@ -14,8 +14,8 @@ import (
 	"github.com/h2non/filetype"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/static"
+	"fb2converter/config"
+	"fb2converter/static"
 )
 
 func (p *Processor) getStylesheet() (*dataFile, error) {

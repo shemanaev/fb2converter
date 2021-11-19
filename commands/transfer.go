@@ -12,8 +12,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/processor"
-	"github.com/rupor-github/fb2converter/state"
+	"fb2converter/processor"
+	"fb2converter/state"
 )
 
 // processEpub processes single EPUB file. "src" is part of the source path (always including file name) relative to the original

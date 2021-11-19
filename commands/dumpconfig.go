@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/state"
+	"fb2converter/state"
 )
 
 // DumpConfig is "dumpconfig" command body.

@@ -16,9 +16,9 @@ import (
 	"github.com/asaskevich/govalidator"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/etree"
-	"github.com/rupor-github/fb2converter/utils"
+	"fb2converter/config"
+	"fb2converter/etree"
+	"fb2converter/utils"
 )
 
 // processBody parses fb2 document body and produces formatted output.

@@ -156,7 +156,7 @@ add_custom_target(bin_fb2c ALL
     DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} ${WINPTY_TARGET}
     BYPRODUCTS ${FB2C_TARGET}
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET}
-        github.com/rupor-github/fb2converter/cmd/fb2c
+        fb2converter/cmd/fb2c
     BYPRODUCTS ${FB2C_TARGET}
     COMMENT "Building fb2c..."
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
@@ -178,12 +178,12 @@ if(CROSS_GOOS STREQUAL "windows")
     # myhomelib suppport
     add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/fb2mobi/fb2mobi${CMAKE_EXECUTABLE_SUFFIX}
         COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${PROJECT_BINARY_DIR}/fb2mobi/fb2mobi${CMAKE_EXECUTABLE_SUFFIX}
-            github.com/rupor-github/fb2converter/cmd/fb2mobi
+            fb2converter/cmd/fb2mobi
         COMMENT "Building fb2mobi..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/fb2epub/fb2epub${CMAKE_EXECUTABLE_SUFFIX}
         COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${PROJECT_BINARY_DIR}/fb2epub/fb2epub${CMAKE_EXECUTABLE_SUFFIX}
-             github.com/rupor-github/fb2converter/cmd/fb2epub
+            fb2converter/cmd/fb2epub
         COMMENT "Building fb2epub..."
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
@@ -207,7 +207,7 @@ add_custom_target(test_processor
     DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} test ${GO_MOD_ARGS} ${TEST_RUN_ARGS}
             -coverprofile=${PROJECT_BINARY_DIR}/test_processor.out
-            github.com/rupor-github/fb2converter/processor
+            fb2converter/processor
     COMMENT "processor tests..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -215,7 +215,7 @@ add_custom_target(test_hyphenator
     DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
     COMMAND ${GO_ENV} ${GO_EXECUTABLE} test ${TEST_RUN_ARGS}
             -coverprofile=${PROJECT_BINARY_DIR}/test_hyphenator.out
-            ${GO_MOD_ARGS} github.com/rupor-github/fb2converter/hyphenator
+            ${GO_MOD_ARGS} fb2converter/hyphenator
     COMMENT "hyphenator tests..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 

@@ -10,8 +10,8 @@ import (
 	"golang.org/x/text/language/display"
 	"gopkg.in/neurosnap/sentences.v1"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/static"
+	"fb2converter/config"
+	"fb2converter/static"
 )
 
 type tokenizer struct {

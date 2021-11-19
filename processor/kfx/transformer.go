@@ -15,9 +15,9 @@ import (
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite"
 
-	"github.com/rupor-github/fb2converter/archive"
-	"github.com/rupor-github/fb2converter/config"
-	// "github.com/rupor-github/fb2converter/utils"
+	"fb2converter/archive"
+	"fb2converter/config"
+	// "fb2converter/utils"
 )
 
 // Default values.

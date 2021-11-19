@@ -25,10 +25,10 @@ import (
 	"golang.org/x/text/language/display"
 	"gopkg.in/gomail.v2"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/etree"
-	"github.com/rupor-github/fb2converter/state"
-	"github.com/rupor-github/fb2converter/utils"
+	"fb2converter/config"
+	"fb2converter/etree"
+	"fb2converter/state"
+	"fb2converter/utils"
 )
 
 // InputFmt defines type of input we are processing.

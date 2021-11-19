@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/processor/mobi"
+	"fb2converter/processor/mobi"
 )
 
 // ProduceThumbnail reads input file, extracts or creates thumbnail and stores it.

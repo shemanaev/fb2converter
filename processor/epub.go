@@ -11,7 +11,7 @@ import (
 	fixzip "github.com/hidez8891/zip"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/config"
+	"fb2converter/config"
 )
 
 func zipRemoveDataDescriptors(from, to string) error {

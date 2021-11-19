@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rupor-github/fb2converter/etree"
+	"fb2converter/etree"
 )
 
 type dataTransientFlags uint8

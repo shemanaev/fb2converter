@@ -16,8 +16,8 @@ import (
 	"github.com/gosimple/slug"
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/etree"
+	"fb2converter/config"
+	"fb2converter/etree"
 )
 
 // generateTOCPage creates an HTML page with TOC.

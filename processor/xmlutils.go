@@ -3,8 +3,8 @@ package processor
 import (
 	"strings"
 
-	"github.com/rupor-github/fb2converter/etree"
-	"github.com/rupor-github/fb2converter/utils"
+	"fb2converter/etree"
+	"fb2converter/utils"
 )
 
 var attr = etree.NewAttr

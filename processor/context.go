@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/etree"
+	"fb2converter/config"
+	"fb2converter/etree"
 )
 
 // context used during fb2 transformation.

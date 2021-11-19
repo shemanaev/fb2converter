@@ -11,9 +11,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/processor/kfx"
-	"github.com/rupor-github/fb2converter/utils"
+	"fb2converter/config"
+	"fb2converter/processor/kfx"
+	"fb2converter/utils"
 )
 
 // FinalizeKFX produces final KFX file out of previously saved temporary files.

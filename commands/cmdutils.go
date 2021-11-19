@@ -8,7 +8,7 @@ import (
 
 	"github.com/h2non/filetype"
 
-	"github.com/rupor-github/fb2converter/utils"
+	"fb2converter/utils"
 )
 
 // isArchiveFile detects if file is our supported archive.

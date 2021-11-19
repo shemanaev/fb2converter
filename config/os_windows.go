@@ -12,10 +12,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rupor-github/fb2converter/config/winpty"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/term"
+
+	"fb2converter/config/winpty"
 )
 
 // CheckPath is called to make sure that path for storing debug related artifacts is OK.

@@ -6,9 +6,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/rupor-github/fb2converter/config"
-	"github.com/rupor-github/fb2converter/state"
-	"github.com/rupor-github/fb2converter/static"
+	"fb2converter/config"
+	"fb2converter/state"
+	"fb2converter/static"
 )
 
 // ExportResources is "export" command body.
