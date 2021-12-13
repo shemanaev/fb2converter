@@ -14,7 +14,19 @@ import (
 var (
 	ionBVM           = []byte{0xE0, 1, 0, 0xEA} // binary version marker
 	rawFragmentTypes = []string{"$418", "$417"}
+
+	defaultYHSymbolTable = createYJSymbolTable(786)
 )
+
+func createYJSymbolTable(maxID uint64) ion.SharedSymbolTable {
+	symbols := make([]string, 0, maxID)
+	for i := len(ion.V1SystemSymbolTable.Symbols()) + 1; i <= len(ion.V1SystemSymbolTable.Symbols())+int(maxID); i++ {
+		symbols = append(symbols, fmt.Sprintf("$%d", i))
+	}
+	return ion.NewSharedSymbolTable("YJ_symbols", 10, symbols)
+}
+
+//------------------------------------------------------------------------------
 
 func createSST(name string, version int, maxID uint64) ion.SharedSymbolTable {
 	symbols := make([]string, 0, maxID)

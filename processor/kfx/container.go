@@ -7,7 +7,7 @@ import (
 	// "encoding/hex"
 	// "errors"
 	"fmt"
-	// "io"
+	"io"
 	// "io/ioutil"
 	// "math"
 	"strconv"
@@ -46,7 +46,6 @@ func (c Capabilities) FullString(cntnr *Container) string {
 
 // Container - mighty KFX itself, logical representation.
 type Container struct {
-	log           *zap.Logger
 	ACR           string
 	Compression   int
 	DRMScheme     int
@@ -58,8 +57,11 @@ type Container struct {
 	Digest        string
 	Entities      []*Entity
 	YJSymbolTable ion.SharedSymbolTable // appropriately sized YJ_symbols table
-	SymbolData    []byte                // raw LST data
-	symbols       ion.SymbolTable       // parsed LST
+	// Not yet sure about this
+	SymbolData []byte          // raw LST data
+	symbols    ion.SymbolTable // parsed LST
+	// internals
+	log *zap.Logger
 }
 
 func (cntnr *Container) String() string {
@@ -77,4 +79,24 @@ func (cntnr *Container) String() string {
 		len(cntnr.symbols.Symbols()), cntnr.symbols.MaxID(),
 		len(cntnr.Entities),
 	)
+}
+
+// NewContainer creates empty container.
+func NewContainer(log *zap.Logger) *Container {
+
+	ctnr := &Container{
+		Compression:   DefaultCompression,
+		DRMScheme:     DefaultDRMScheme,
+		ChunkSize:     DefaultChunkSize,
+		Version:       DefaultContainerVersion,
+		YJSymbolTable: defaultYHSymbolTable,
+		symbols:       ion.NewLocalSymbolTable([]ion.SharedSymbolTable{ion.V1SystemSymbolTable, defaultYHSymbolTable}, []string{}),
+		log:           log,
+	}
+	return ctnr
+}
+
+// Load reads and parses kfx from provided stream.
+func (ctnr *Container) Load(r io.ReaderAt, size int64) error {
+	return nil
 }

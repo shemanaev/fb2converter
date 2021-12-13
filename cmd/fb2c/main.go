@@ -61,7 +61,6 @@ func (w *appWrapper) beforeAppRun(c *cli.Context) error {
 	if env.Cfg, err = config.BuildConfig(fconfig...); err != nil {
 		return cli.Exit(fmt.Errorf("%sunable to build configuration: %w", errPrefix, err), errCode)
 	}
-
 	// We may want to do some profiling
 	if p := c.String("cpuprofile"); len(p) > 0 {
 		w.prof = profile.Start(profile.CPUProfile, profile.ProfilePath(p))

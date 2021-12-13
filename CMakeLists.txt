@@ -155,10 +155,18 @@ add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/fb2c_${MSYSTEM_NAME}.zip
 add_custom_target(bin_fb2c ALL
     DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go ${KINDLEGEN_TARGET} ${WINPTY_TARGET}
     BYPRODUCTS ${FB2C_TARGET}
-    COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET}
-        fb2converter/cmd/fb2c
-    BYPRODUCTS ${FB2C_TARGET}
+    COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${FB2C_TARGET} fb2converter/cmd/fb2c
     COMMENT "Building fb2c..."
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_custom_target(bin_dumpkfx
+    DEPENDS ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/dumpkfx${CMAKE_EXECUTABLE_SUFFIX}
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/dumpkfx${CMAKE_EXECUTABLE_SUFFIX}
+    DEPENDS ${PROJECT_SOURCE_DIR}/processor/enums_string.go
+    COMMAND ${GO_ENV} ${GO_EXECUTABLE} build ${GO_MOD_ARGS} -trimpath -o ${PROJECT_BINARY_DIR}${INSTALL_SUBDIR}/dumpkfx${CMAKE_EXECUTABLE_SUFFIX}
+        fb2converter/cmd/dumpkfx
+    COMMENT "Building dumpkfx..."
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 if(CROSS_GOOS STREQUAL "windows")
